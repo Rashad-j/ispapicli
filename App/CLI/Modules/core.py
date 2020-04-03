@@ -46,7 +46,13 @@ class Core:
             return 'No commands provided'
 
     def getResponse(self, response, mode):
-        print(response.getPlain())
+        code = response.getCode()
+        if code == 200:
+            print(response.getPlain())
+        else:
+            description = response.getDescription()
+            message = "Server error: " + str(code) + " " + description
+            print(message)
 
     def parseArgs(self, args, nb_args):
         # case no arguments provided
@@ -63,39 +69,49 @@ class Core:
                     return 'start_gui'
 
                 # case user
-                m = re.match(r'^-u([^ ]*)?', arg) or re.match(r'^--user\=(.+)', arg)
+                m = re.match(r'^-u([^ ]*)?', arg)
                 if m:
                     if m.group(1):
                         self.__config["user"] = m.group(1)
                         # print m.group(1)
                     continue
+                m = re.match(r'^--user\=(.+)', arg)
+                if m:
+                    if m.group(1):
+                        self.__config["user"] = m.group(1)
+                    continue
 
                 # case login
-                m = re.match(r'^-l([^ ]*)?',
-                             arg) or re.match(r'^--login\=(.+)', arg)
+                m = re.match(r'^-l([^ ]*)?', arg)
                 if m:
                     if m.group(1):
                         self.__config["login"] = m.group(1)
                     continue
-                ####
+                m = re.match(r'^--login\=(.+)', arg)
+                if m:
+                    if m.group(1):
+                        self.__config["login"] = m.group(1)
+                    continue
+
+                # case password
                 m = re.match(r'^--password\=(.+)', arg)
                 if m:
                     if m.group(1):
                         self.__config["password"] = m.group(1)
                     continue
-                ####
-                m = re.match(r'^-e([^ ]*)?', arg) or re.match(r'^--entity\=(.+)', arg)
+                # case entity
+                m = re.match(r'^--entity\=(.+)', arg)
                 if m:
                     if m.group(1):
                         self.__config["entity"] = m.group(1)
                     continue
-                ####
+
                 m = re.match(r'^-h([^ ]*)?', arg) or re.match(r'^--help', arg)
                 if m:
-                    showhelp = True
-                    continue
+                    return 'show_help'
                 ####
-                if re.match(r'^-v([^ ]*)?', arg) or re.match(r'^--version', arg):
+                m = re.match(r'^-v([^ ]*)?', arg) or re.match(r'^--version', arg)
+                if m:
                     return 'show_version'
                 ####
                 if re.match(r'^-p(.*)', arg):
@@ -114,7 +130,7 @@ class Core:
         struct_cmds = {}
         for i in range(c_len):
             # if user provided command keyword
-            if i == 0 and cmds[i] != "command":
+            if i == 0:
                 struct_cmds['COMMAND'] = cmds[i]
             else:
                 key, value = cmds[i].split('=')

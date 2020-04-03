@@ -16,14 +16,15 @@ def main(args):
 
     #
     if type(parsedArgs) is str:
-        if(parsedArgs == 'start_gui'):
-            print('start gui')
+        if parsedArgs == 'start_gui':
+            startGUI()
+        elif parsedArgs == 'show_help':
+            print(showHelp())
         else:  # case of show version
-            print('show version')
+            print(showVersion())
 
     elif type(parsedArgs) is list:
         # case a command requested
-        print(parsedArgs)
         if core.login():
             response = core.request()
             if type(response) is Response:
@@ -37,9 +38,50 @@ def main(args):
         print('Bad Command')
 
 
-def start_gui():
+def startGUI():
     print("Gui Started")
     sys.exit(0)
+
+
+def showHelp():
+    return """
+    
+        ISPAPI - Commandline Tool
+        Version: v 2.0.1 
+
+        usage: ispapi [arguments] [command] [Properties]
+        
+        Arguments:
+        
+        --help    | -h    ..................... Open the help
+        --version | -v    ..................... Returns the software version
+        --gui     | empty    .................. Open the graphical user interface
+        --password=<password>    .............. Choose your password
+        --login=<login>     ................... Choose your login
+        --entity=<entity> ..................... Choose your entity (1234: OTE, 54cd: LIVE)
+
+        
+        Commands:
+        
+        CheckDomain <domain>    ............ Check the availability of the domain
+        StatusDomain <domain>    ........... Returns the current status of the domain with a lot of informations
+        QueryDomainList    ................. Returns a list of all your domains
+        ...
+        
+        Properties:
+        
+        limit = <number> ................... Set limit of returned results
+        orderby = <text> ................... Order returned results, e.g. orderby = DOMAIN
+        * = *  ............................. Any other option of your choice 
+        ...
+        
+        All API Commands are detailed at: https://wiki.hexonet.net
+
+    """
+
+
+def showVersion():
+    return 'v 2.0.1'
 
 
 if __name__ == "__main__":
