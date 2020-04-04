@@ -1,0 +1,1 @@
+{"command": "SetNextInvoiceID", "description": "This command sets the ID of the next invoice that the invoice batch will use.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "SetNextInvoiceID", "Type": "COMMAND"}, {"Parameter": "INVOICEID", "Min": "1", "Definition": "Invoice ID", "Type": "TEXT"}]}

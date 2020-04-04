@@ -1,0 +1,1 @@
+{"command": "StatusAccount", "description": "This command returns the account's finance related properties and current values related to finances.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusAccount", "Type": "COMMAND"}]}

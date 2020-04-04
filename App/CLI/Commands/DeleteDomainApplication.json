@@ -1,0 +1,1 @@
+{"command": "DeleteDomainApplication", "description": "Delete a domain application.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "DeleteDomainApplication", "Type": "COMMAND"}, {"Parameter": "APPLICATION", "Min": "1", "Definition": "Application ID", "Type": "TEXT"}]}

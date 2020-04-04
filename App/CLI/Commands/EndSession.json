@@ -1,0 +1,1 @@
+{"command": "EndSession", "description": "Ends the current session.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "EndSession", "Type": "COMMAND"}]}

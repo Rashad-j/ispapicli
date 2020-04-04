@@ -5,36 +5,88 @@ from pathlib import Path
 
 
 class Scrap:
-    def __init__(self):
-        # GitHub URL
-        self.url = 'https://github.com/hexonet/hexonet-api-documentation/blob/master/API/DOMAIN/ADDON/QUERYDOMAINADDONLIST.md'
-        self.page = requests.get(self.url)
-        # get page download status, 200 is success
-        self.statusCode = self.page.status_code
-        self.headers = self.page.headers
-        # get the page content
-        self.src = self.page.content
-        # parse HTML content, create bs4 object
-        self.results = BeautifulSoup(self.src, 'html.parser')
-        # get only the command description element
-        self.article = self.results.article
-        # table of parametrs
-        self.table = self.article.table
+    def __init__(self, URL):
+        self.mainURL = URL
+    # recursive function
 
-    def getCommandName(self):
+    def getURLs(self, urls):
+        # urls to return
+        Allurls = []
+        # parse url
+        for url in urls:
+            if(self.checkUrlType(url) == 'file'):
+                Allurls.append(url)
+                print('url found: ' + url)
+            else:
+                # it is a directory
+                # get all links in this directory
+                newLinks = self.getPageURLs(url)
+                # for each link, call it by the function itself
+                for newlink in newLinks:
+                    Allurls.extend(self.getURLs([newlink]))
+        return Allurls
+
+    def getPageURLs(self, url):
+        # urls in a single page to return
+        urls = []
+        page = requests.get(url)
+        # get page download status, 200 is success
+        statusCode = page.status_code
+        # get the page content
+        src = page.content
+        # parse HTML content, create bs4 object
+        html = BeautifulSoup(src, 'html.parser')
+        # get table body
+        tbody = html.table.tbody
+        # get tr
+        rows = tbody.find_all('tr', attrs={'class': 'js-navigation-item'})
+        for row in rows:
+            # href = row.a['js-navigation-open']
+            td = row.find('td', attrs={'class': 'content'})
+            href = td.find('a', attrs={'class': 'js-navigation-open'})
+            # add the url to the urls
+            urlLink = 'https://github.com/' + href.get('href')
+            urls.append(urlLink)
+        # return urls
+        return urls
+
+    def checkUrlType(self, url):
+        if url.endswith('.md'):
+            return 'file'
+        else:
+            return 'directory'
+
+    def getParsedPage(self, url):
+        try:
+            page = requests.get(url)
+            # get page download status, 200 is success
+            statusCode = page.status_code
+            # get the page content
+            src = page.content
+            # parse HTML content, create bs4 object
+            html = BeautifulSoup(src, 'html.parser')
+            # get only the command description element
+            article = html.article
+            # table of parametrs
+            table = article.table
+            return article, table
+        except:
+            return "Couldn't parse page: " + url
+
+    def getCommandName(self, article):
         # since there is only one h1 element in article block, return it
-        return self.article.h1.text
+        return article.h1.text
 
     # description of the command
-    def getCommandDescription(self):
+    def getCommandDescription(self, article):
         # 1st p is the description
-        desc = self.article.find_all('p')
+        desc = article.find_all('p')
         return desc[0].text
 
     # get comman avaiablity
-    def getCommandAvailability(self):
+    def getCommandAvailability(self, article):
         # 2nd p is the description
-        ava = self.article.find_all('p')
+        ava = article.find_all('p')
         return ava[1].text
 
     # allowed parameters
@@ -54,10 +106,10 @@ class Scrap:
             param = {}
         return params
 
-    def getCommandExample(self):
+    def getCommandExample(self, article):
         pass
 
-    def getResponseExample(self):
+    def getResponseExample(self, article):
         pass
 
     def getTableHeaders(self, table):
@@ -76,25 +128,30 @@ class Scrap:
         with p.open('w') as outfile:
             json.dump(data, outfile)
             outfile.close
+        print('Command file created: ', p)
 
-    def getCommandData(self, table):
+    def getCommandData(self, article, table):
         data = {}
-        data['command'] = self.getCommandName()
-        data['description'] = self.getCommandDescription()
-        data['availability'] = self.getCommandAvailability()
+        data['command'] = self.getCommandName(article)
+        data['description'] = self.getCommandDescription(article)
+        data['availability'] = self.getCommandAvailability(article)
         data['paramaters'] = self.getCommandParameters(table)
         return data
 
 
 if __name__ == "__main__":
-    scrap = Scrap()
+    gitHubURL = 'https://github.com/hexonet/hexonet-api-documentation/tree/master/API'
+    scrap = Scrap(gitHubURL)
     # print(scrap.getCommandName())
     # print(scrap.getCommandDescription())
     # print(scrap.getCommandParameters(scrap.article.table))
     # print(scrap.getCommandAvailability())
     # print(scrap.getTableHeaders())
-    table = scrap.article.table
-    data = scrap.getCommandData(table)
-    print(data)
-    commandName = scrap.getCommandName()
-    print(scrap.dumpCommandToFile(commandName, data))
+    # urls = scrap.getURLs()
+
+    urls = scrap.getURLs([gitHubURL])
+    for url in urls:
+        article, table = scrap.getParsedPage(url)
+        commandName = scrap.getCommandName(article)
+        data = scrap.getCommandData(article, table)
+        scrap.dumpCommandToFile(commandName, data)

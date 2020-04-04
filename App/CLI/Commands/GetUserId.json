@@ -1,0 +1,1 @@
+{"command": "GetUserId", "description": "This command allows to get a subuser account ID.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "GetUserId", "Type": "COMMAND"}, {"Parameter": "USERINDEX", "Min": "1", "Definition": "Subuser index", "Type": "TEXT"}]}

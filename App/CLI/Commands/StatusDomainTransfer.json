@@ -1,0 +1,1 @@
+{"command": "StatusDomainTransfer", "description": "This command returns various information about a pending transfer.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusDomainTransfer", "Type": "COMMAND"}, {"Parameter": "DOMAIN", "Min": "1", "Definition": "Name of the domain", "Type": "DOMAIN"}]}

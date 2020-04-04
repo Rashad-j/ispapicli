@@ -1,0 +1,1 @@
+{"command": "StatusDomainApplication", "description": "Query information on a domain application.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusDomainApplication", "Type": "COMMAND"}, {"Parameter": "APPLICATION", "Min": "1", "Definition": "Application ID", "Type": "TEXT"}]}

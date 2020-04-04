@@ -1,0 +1,1 @@
+{"command": "StatusPremiumDNS", "description": "Query the status of a PremiumDNS object.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusPremiumDNS", "Type": "COMMAND"}, {"Parameter": "OBJECTID", "Min": "1", "Definition": "PremiumDNS object ID", "Type": "TEXT"}]}

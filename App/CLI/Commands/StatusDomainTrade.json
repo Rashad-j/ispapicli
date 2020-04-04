@@ -1,0 +1,1 @@
+{"command": "StatusDomainTrade", "description": "Query status of a domain trade in progress.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusDomainTrade", "Type": "COMMAND"}, {"Parameter": "DOMAIN", "Min": "1", "Definition": "Domain Name", "Type": "DOMAIN"}]}

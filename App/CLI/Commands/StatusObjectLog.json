@@ -1,0 +1,1 @@
+{"command": "StatusObjectLog", "description": "Gives you detailed information on one specific object log entry.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusObjectLog", "Type": "COMMAND"}, {"Parameter": "LOGINDEX", "Min": "1", "Definition": "ID of the logging entry", "Type": "INT"}]}

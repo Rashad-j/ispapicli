@@ -1,0 +1,1 @@
+{"command": "DeleteDNSZone", "description": "The command deletes an existing DNS Zone.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "DeleteDNSZone", "Type": "COMMAND"}, {"Parameter": "DNSZONE", "Min": "1", "Definition": "Name of the DNS Zone", "Type": "TEXT"}]}

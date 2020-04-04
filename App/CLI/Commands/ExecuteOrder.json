@@ -1,0 +1,1 @@
+{"command": "ExecuteOrder", "description": "This command allows to execute an order.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "ExecuteOrder", "Type": "COMMAND"}, {"Parameter": "ORDERID", "Min": "1", "Definition": "Order ID", "Type": "INT"}]}

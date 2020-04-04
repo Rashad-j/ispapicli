@@ -1,0 +1,1 @@
+{"command": "CheckUsername", "description": "Checks if a user ID is valid and available.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "CheckUsername", "Type": "COMMAND"}, {"Parameter": "SUBUSER", "Min": "1", "Definition": "User ID of the subuser", "Type": "TEXT"}]}

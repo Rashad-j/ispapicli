@@ -1,0 +1,1 @@
+{"command": "DeleteEvent", "description": "Delete an event.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "DeleteEvent", "Type": "COMMAND"}, {"Parameter": "EVENT", "Min": "1", "Definition": "ID of the event", "Type": "INT"}]}

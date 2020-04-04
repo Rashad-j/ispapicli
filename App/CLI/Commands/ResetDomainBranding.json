@@ -1,0 +1,1 @@
+{"command": "ResetDomainBranding", "description": "Reset the domain branding.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "ModifyDomain", "Type": "COMMAND"}, {"Parameter": "DOMAIN", "Min": "0", "Definition": "Domain name; required", "Type": "DOMAIN"}]}

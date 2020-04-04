@@ -1,0 +1,1 @@
+{"command": "DeleteOrder", "description": "This command allows to delete orders.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "DeleteOrder", "Type": "COMMAND"}, {"Parameter": "ORDERID[0..N]", "Min": "0", "Definition": "Order IDs", "Type": "INT"}]}

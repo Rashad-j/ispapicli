@@ -1,0 +1,1 @@
+{"command": "DeleteInvoice", "description": "This command allows to delete an invoice, issued to a subuser.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "DeleteInvoice", "Type": "COMMAND"}, {"Parameter": "INVOICEID", "Min": "1", "Definition": "Invoice ID", "Type": "TEXT"}]}

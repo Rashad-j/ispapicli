@@ -1,0 +1,1 @@
+{"command": "StatusNameserver", "description": "Query the status of a nameserver host.", "availability": "All users have access to this command.", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusNameserver", "Type": "COMMAND"}, {"Parameter": "NAMESERVER", "Min": "1", "Definition": "Name of the nameserver host", "Type": "NAMESERVER"}]}
