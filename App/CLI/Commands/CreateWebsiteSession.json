@@ -1,0 +1,1 @@
+{"command": "CreateWebsiteSession", "description": " ", "availability": " ", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "CreateWebsiteSession", "Type": "COMMAND"}, {"Parameter": "ID", "Min": "1", "Definition": "ID of the website", "Type": "INT"}, {"Parameter": "ENTITY", "Min": "1", "Definition": "Must be SITE", "Type": "TEXT"}]}

@@ -80,14 +80,21 @@ class Scrap:
     # description of the command
     def getCommandDescription(self, article):
         # 1st p is the description
-        desc = article.find_all('p')
-        return desc[0].text
-
+        # adding exception for webely
+        try:
+            desc = article.find_all('p')
+            return desc[0].text
+        except:
+            return ' '
     # get comman avaiablity
+
     def getCommandAvailability(self, article):
         # 2nd p is the description
-        ava = article.find_all('p')
-        return ava[1].text
+        try:
+            ava = article.find_all('p')
+            return ava[1].text
+        except:
+            return ' '
 
     # allowed parameters
     def getCommandParameters(self, table):
@@ -155,3 +162,4 @@ if __name__ == "__main__":
         commandName = scrap.getCommandName(article)
         data = scrap.getCommandData(article, table)
         scrap.dumpCommandToFile(commandName, data)
+    print('/nCommands created successfully!')

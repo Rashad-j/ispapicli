@@ -1,0 +1,1 @@
+{"command": "DeleteWebsite", "description": " ", "availability": " ", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "DeleteWebsite", "Type": "COMMAND"}, {"Parameter": "ID", "Min": "1", "Definition": "ID of the website", "Type": "INT"}, {"Parameter": "ORDER", "Min": "0", "Definition": "Delete order action:CREATE", "Type": "CREATE"}]}
