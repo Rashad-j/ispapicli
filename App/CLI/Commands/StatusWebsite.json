@@ -1,16 +1,1 @@
-{
-    "command": "StatusWebsite",
-    "description": " ",
-    "availability": " ",
-    "paramaters": [{
-        "Parameter": "COMMAND",
-        "Min": "1",
-        "Definition": "StatusWebsite",
-        "Type": "COMMAND"
-    }, {
-        "Parameter": "ID",
-        "Min": "1",
-        "Definition": "ID of the website",
-        "Type": "INT"
-    }]
-}
+{"command": "StatusWebsite", "description": " ", "availability": " ", "paramaters": [{"Parameter": "COMMAND", "Min": "1", "Definition": "StatusWebsite", "Type": "COMMAND"}, {"Parameter": "ID", "Min": "1", "Definition": "ID of the website", "Type": "INT"}]}

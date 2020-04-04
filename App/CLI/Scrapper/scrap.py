@@ -162,4 +162,4 @@ if __name__ == "__main__":
         commandName = scrap.getCommandName(article)
         data = scrap.getCommandData(article, table)
         scrap.dumpCommandToFile(commandName, data)
-    print('/nCommands created successfully!')
+    print('\n Commands created successfully!')
