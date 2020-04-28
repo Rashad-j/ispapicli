@@ -3,7 +3,7 @@
 import os
 import sys
 import argparse
-from Modules.core import Core
+# from Modules.core import Core
 from hexonet.apiconnector.response import Response
 
 
@@ -85,8 +85,8 @@ def showVersion():
 
 
 if __name__ == "__main__":
-    main(sys.argv[0:])
-
+    # main(sys.argv[0:])
+    print(' '.join(sys.argv[1:]))
     # parser = argparse.ArgumentParser(
     #    description="Our CLI Tool"
     # )

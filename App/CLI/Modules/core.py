@@ -1,49 +1,56 @@
 from hexonet.apiconnector.apiclient import APIClient as AC
 from hexonet.apiconnector.response import Response
 import re
-from .exceptions import NoLoginPass
+import argparse
+import textwrap
+import sys
+from pathlib import Path
+from datetime import datetime, timedelta
+import json
+import time
 
 
 class Core:
     def __init__(self):
-        self.commandList = []
         # create private config list
-        self.__config = {}
+        self.command = ''
         self.cl = AC()
-        self.cl.useOTESystem()
-        self.loginSession = ''
 
-    def login(self):
-        try:
-            login = self.__config['login']
-            password = self.__config['password']
-            self.cl.setCredentials(login, password)
+    def login(self, args):
+        user = args['userid']
+        password = args['password']
+        entity = args['entity']
+        # check if login credentials provided
+        if None not in (user, password, entity):
+            # check which system to use, live of test
+            if entity == 'ote':
+                # case ote is set, otherwise by default the system is live
+                self.cl.useOTESystem()
+            self.cl.setCredentials(user, password)
             r = self.cl.login()
             if r.isSuccess():
-                # get login session
-                self.loginSession = self.cl.getSession()
-                self.cl.saveSession
-                return True
+                # save login session
+                loginSession = self.cl.getSession()
+                self.saveSession(loginSession)
+                msg = "Login success. Your session valid for one hour max of idle time"
+                # save session
+                return True, msg
             else:
-                return False
-        except Exception:
-            return 'Missing Login Credentials'
+                desc = r.getDescription()
+                code = r.getCode()
+                msg = "Server error: " + str(code) + " " + desc
+                return False, msg
+        else:
+            msg = "Please login by entering all login information: userid, password and entity"
+            return False, msg
 
     def logout(self):
         pass
 
-    def request(self):
-        # set user session
-        self.cl.setSession(str(self.loginSession))
-        # check if commands provided previously
-        if len(self.commandList) > 0:
-            # get commands in dictionary format
-            commands = self.parseCommand(self.commandList)
-            # request command
-            response = self.cl.request(commands)
-            return response
-        else:
-            return 'No commands provided'
+    def request(self, commands):
+        # get commands in dictionary format
+        response = self.cl.request(commands)
+        return response
 
     def getResponse(self, response, mode):
         code = response.getCode()
@@ -54,93 +61,118 @@ class Core:
             message = "Server error: " + str(code) + " " + description
             print(message)
 
-    def parseArgs(self, args, nb_args):
-        # case no arguments provided
-        if nb_args == 1:
-            return 'start_gui'
-        # get commands and arguments
-        for i in range(1, nb_args):
-            arg = args[i]
-            if re.match(r'^-', arg):
-
-                # case gui is called
-                m = re.match(r'^--gui', arg)
-                if m:
-                    return 'start_gui'
-
-                # case user
-                m = re.match(r'^-u([^ ]*)?', arg)
-                if m:
-                    if m.group(1):
-                        self.__config["user"] = m.group(1)
-                        # print m.group(1)
-                    continue
-                m = re.match(r'^--user\=(.+)', arg)
-                if m:
-                    if m.group(1):
-                        self.__config["user"] = m.group(1)
-                    continue
-
-                # case login
-                m = re.match(r'^-l([^ ]*)?', arg)
-                if m:
-                    if m.group(1):
-                        self.__config["login"] = m.group(1)
-                    continue
-                m = re.match(r'^--login\=(.+)', arg)
-                if m:
-                    if m.group(1):
-                        self.__config["login"] = m.group(1)
-                    continue
-
-                # case password
-                m = re.match(r'^--password\=(.+)', arg)
-                if m:
-                    if m.group(1):
-                        self.__config["password"] = m.group(1)
-                    continue
-                # case entity
-                m = re.match(r'^--entity\=(.+)', arg)
-                if m:
-                    if m.group(1):
-                        self.__config["entity"] = m.group(1)
-                    continue
-
-                m = re.match(r'^-h([^ ]*)?', arg) or re.match(r'^--help', arg)
-                if m:
-                    return 'show_help'
-                ####
-                m = re.match(r'^-v([^ ]*)?', arg) or re.match(r'^--version', arg)
-                if m:
-                    return 'show_version'
-                ####
-                if re.match(r'^-p(.*)', arg):
-                    if m.group(1):
-                        property_string = m.group(1)
-                    continue
-                ####
+    def parseArgs(self, args, parameters):
+        # if logged in, and there is a session, then check for the command and the args
+        if self.checkSession(args) == True:
+            if args['command'] is not None:
+                cmd_struct = {}
+                cmd_struct['command'] = args['command']
+                # append parameters with the command
+                params_list = self.parseParameters(parameters)
+                cmd_struct.update(params_list)
+                return cmd_struct
             else:
-                self.commandList.append(arg)
-
-        return self.commandList
-
-    def parseCommand(self, cmds):
-        c_len = len(cmds)
-        # output command dictionary
-        struct_cmds = {}
-        for i in range(c_len):
-            # if user provided command keyword
-            if i == 0:
-                struct_cmds['COMMAND'] = cmds[i]
+                raise Exception('No command entered!')
+        # if not logged in, perform login, needed = user, pass, entity
+        else:
+            result, msg = self.login(args)
+            if result == True:
+                return msg
             else:
-                key, value = cmds[i].split('=')
-                struct_cmds[key] = value
+                return msg
+
+    def checkSession(self, args):
+        data = {}
+        # check if there is a session already exist
+        try:
+            path = Path(__file__).parent / "../Config/session.json"
+            with path.open('r') as f:
+                data = json.load(f)
+                f.close()
+            time_format = "%Y-%m-%d %H:%M:%S"
+            t_now = datetime.now().strftime(time_format)
+            t_now_object = datetime.strptime(t_now, time_format)
+            t_old = data['ts']
+            t_old_object = datetime.strptime(t_old, time_format)
+            t_new = t_now_object - timedelta(hours=1)
+            if t_new < t_old_object:
+                result = self.cl.setSession(str(data['session']))
+                return True
+            # Do something with the file
+        except IOError:
+            return False
+
+    def saveSession(self, loginSession):
+        time_format = "%Y-%m-%d %H:%M:%S"
+        ts = datetime.now().strftime(time_format)
+        data = {}
+        data['session'] = loginSession
+        data['ts'] = ts
+        # write session and current time to local file
+        path = Path(__file__).parent / "../Config/session.json"
+        with path.open('w') as f:
+            json.dump(data, f)
+            f.close
+        return True
+
+    def parseParameters(self, parameters):
+        params_len = len(parameters)
+        params = {}
+        i = 0
+        while i < (params_len):
+            if '=' in parameters[i]:
+                key, value = parameters[i].split('=')
+                params[key] = value
+            else:
+                key = parameters[i]
+                i += 1
+                value = parameters[i]
+                params[key] = value
+            i += 1
         # return result
-        return struct_cmds
+        return params
 
     def parseResponse(self, response):
         pass
 
 
-# if __name__ == "__main__":
-#    obj = Core()
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+        prog='PROG',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=textwrap.dedent('''\
+         Please do not mess up this text!
+         --------------------------------
+             I have indented it
+             exactly the way
+             I want it
+         '''))
+    parser.add_argument(
+        '--command', '-c', help='Enter a command e.g. -c=CheckDomain or -c CheckDomain')
+    parser.add_argument(
+        '--entity', '-e', help="set entity to either live or ote system e.g. -e=ote", choices={'live', 'ote'})
+    parser.add_argument('--userid', '-u', help='Your login user ID')
+    parser.add_argument('--password', '-p', help="Your login password")
+    parser.add_argument('--gui', '-g', help="Start graphical application")
+    parser.add_argument('args', nargs=argparse.REMAINDER,
+                        help='All additional args e.g. limit=5')
+
+    # original_args = '-l login -p pass XX YY ZZ kk'
+    original_args = ' '.join(sys.argv[1:])
+    # remove spaces around the = cases ' =', '= ', ' = '
+    original_args = original_args.replace(" = ", "=")
+    original_args = original_args.replace(" =", "=")
+    original_args = original_args.replace("= ", "=")
+    splitted_args = (original_args.split())
+    args = vars(parser.parse_args(splitted_args))
+    print(args)
+    reminderargs = args['args']
+    coreObj = Core()
+    try:
+        parsed_params = coreObj.parseArgs(args, reminderargs)
+        print(parsed_params)
+        response = coreObj.request(parsed_params)
+    except Exception as e:
+        print("Command failed due to: " + str(e))
+    # print(reminderargs)

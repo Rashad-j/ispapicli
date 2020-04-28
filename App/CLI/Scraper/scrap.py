@@ -7,8 +7,8 @@ from pathlib import Path
 class Scrap:
     def __init__(self, URL):
         self.mainURL = URL
-    # recursive function
 
+    # recursive function
     def getURLs(self, urls):
         # urls to return
         Allurls = []
@@ -17,6 +17,7 @@ class Scrap:
             if(self.checkUrlType(url) == 'file'):
                 Allurls.append(url)
                 print('url found: ' + url)
+                # create the command here
             else:
                 # it is a directory
                 # get all links in this directory
@@ -32,23 +33,27 @@ class Scrap:
         page = requests.get(url)
         # get page download status, 200 is success
         statusCode = page.status_code
-        # get the page content
-        src = page.content
-        # parse HTML content, create bs4 object
-        html = BeautifulSoup(src, 'html.parser')
-        # get table body
-        tbody = html.table.tbody
-        # get tr
-        rows = tbody.find_all('tr', attrs={'class': 'js-navigation-item'})
-        for row in rows:
-            # href = row.a['js-navigation-open']
-            td = row.find('td', attrs={'class': 'content'})
-            href = td.find('a', attrs={'class': 'js-navigation-open'})
-            # add the url to the urls
-            urlLink = 'https://github.com/' + href.get('href')
-            urls.append(urlLink)
-        # return urls
-        return urls
+        if statusCode == 200:
+            # get the page content
+            src = page.content
+            # parse HTML content, create bs4 object
+            html = BeautifulSoup(src, 'html.parser')
+            # get table body
+            tbody = html.table.tbody
+            # get tr
+            rows = tbody.find_all('tr', attrs={'class': 'js-navigation-item'})
+            for row in rows:
+                # href = row.a['js-navigation-open']
+                td = row.find('td', attrs={'class': 'content'})
+                href = td.find('a', attrs={'class': 'js-navigation-open'})
+                # add the url to the urls
+                urlLink = 'https://github.com/' + href.get('href')
+                urls.append(urlLink)
+            # return urls
+            return urls
+        else:
+            raise Exception(
+                "Page couldn't loaded. Status code: " + str(statusCode))
 
     def checkUrlType(self, url):
         if url.endswith('.md'):
@@ -148,18 +153,18 @@ class Scrap:
 
 if __name__ == "__main__":
     gitHubURL = 'https://github.com/hexonet/hexonet-api-documentation/tree/master/API'
-    scrap = Scrap(gitHubURL)
-    # print(scrap.getCommandName())
-    # print(scrap.getCommandDescription())
-    # print(scrap.getCommandParameters(scrap.article.table))
-    # print(scrap.getCommandAvailability())
-    # print(scrap.getTableHeaders())
-    # urls = scrap.getURLs()
-
-    urls = scrap.getURLs([gitHubURL])
-    for url in urls:
-        article, table = scrap.getParsedPage(url)
-        commandName = scrap.getCommandName(article)
-        data = scrap.getCommandData(article, table)
-        scrap.dumpCommandToFile(commandName, data)
-    print('\n Commands created successfully!')
+    try:
+        scrap = Scrap(gitHubURL)
+        urls = scrap.getURLs([gitHubURL])
+        for url in urls:
+            try:
+                article, table = scrap.getParsedPage(url)
+                commandName = scrap.getCommandName(article)
+                data = scrap.getCommandData(article, table)
+                scrap.dumpCommandToFile(commandName, data)
+            except Exception as e:
+                print("Couldn't extract command because documentation differs in URL: " +
+                      url+" \nReason: " + str(e))
+        print('\n Commands created successfully!')
+    except Exception as e:
+        print("Process stopped due to: " + str(e))
