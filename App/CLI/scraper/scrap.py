@@ -136,7 +136,7 @@ class Scrap:
 
     def dumpCommandToFile(self, commandName, data):
         # if command file does not exist, create it and dump
-        p = Path('../Commands/'+commandName+'.json')
+        p = Path('../commands/'+commandName+'.json')
         with p.open('w') as outfile:
             json.dump(data, outfile)
             outfile.close
