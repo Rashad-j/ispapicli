@@ -18,17 +18,22 @@ def main(args):
     args = vars(parser.parse_args(splitted_args))
     reminderargs = args['args']
     try:
-        parsed_params = core_obj.parseArgs(args, reminderargs)
-        if type(parsed_params) == str:
-            if parsed_params == 'gui':
-                startGUI()
-            elif parsed_params == 'help':
-                parser.print_help()
-            else:
-                print(parsed_params)
-        else:
-            response = core_obj.request(parsed_params)
+        result, data = core_obj.parseArgs(args, reminderargs)
+        if result == 'logout':
+            print('Logged out successfully!')
+        if result == 'gui':
+            startGUI()
+        if result == 'help':
+            parser.print_help()
+        if result == 'help_command':
+            print('\nCommand info: \n')
+            print(data)
+        if result == 'msg':
+            print(data)
+        if result == 'cmd':
+            response = core_obj.request(data)
             print(response.getPlain())
+        sys.exit(0)
 
     except Exception as e:
         print("Command failed due to: " + str(e))

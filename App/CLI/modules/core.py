@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import json
 import time
+import os
 
 
 class Core:
@@ -49,6 +50,8 @@ class Core:
                             help="Show detailed use of a 'command' OR use --help to show help")
         parser.add_argument('args', nargs=argparse.REMAINDER,
                             help='All additional args, e.g. limit=5')
+        parser.add_argument('--logout', '-l', const='gui', nargs='?', metavar='<>',
+                            help="Destroy your current session")
         parser.add_argument('--version', '-v', action='version',
                             version='%(prog)s 2.0')
         # clean extra spaces
@@ -110,15 +113,18 @@ class Core:
             print(message)
 
     def parseArgs(self, args, parameters):
-
-        # if args['logout'] is not None:
-        #     self.logout()
-        #     return 'logout'
+        if args['logout'] is not None:
+            # self.logout()
+            return 'logout', {}
         if args['gui'] is not None:
-            return 'gui'
+            return 'gui', {}
         if args['help'] is not None:
-            return 'help'
-
+            if args['help'] == 'all':
+                return 'help', {}
+            else:
+                command_help = args['help']
+                help_info = self.getCommandHelp(command_help)
+                return 'help_command', help_info
         # if logged in, and there is a session, then check for the command and the args
         session_status = self.checkSession(args)
         if session_status == 'valid':
@@ -128,20 +134,34 @@ class Core:
                 # append parameters with the command
                 params_list = self.parseParameters(parameters)
                 cmd_struct.update(params_list)
-                return cmd_struct
+                return 'cmd', cmd_struct
             else:
                 raise Exception('No command entered!')
         # first time use
         elif session_status == 'init':
             msg = 'Please login first'
-            return msg
+            return 'msg', msg
         # if session expired
         else:
             result, msg = self.login(args, 'expired')
-            if result == True:
-                return msg
-            else:
-                return msg
+            return 'msg', msg
+
+    def getCommandHelp(self, command_name):
+        command_name = command_name.lower()
+        path = Path(__file__).parent / "../commands/"
+        data = {}
+        files = os.listdir(path)
+        for file in files:
+            file_name, ext = file.split('.')
+            file_name_lower_case = file_name.lower()
+            if file_name_lower_case == command_name:
+                file_path = os.path.join(path, file)
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                    f.close()
+                return data
+        else:
+            return 'Command not found'
 
     def checkSession(self, args):
         data = {}
