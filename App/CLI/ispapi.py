@@ -27,7 +27,8 @@ def main(args):
             parser.print_help()
         if result == 'help_command':
             print('\nCommand info: \n')
-            print(data)
+            print(data[0])
+            print(data[1])
         if result == 'msg':
             print(data)
         if result == 'cmd':

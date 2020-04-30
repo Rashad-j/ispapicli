@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import json
 import time
 import os
+from tabulate import tabulate
+from textwrap import TextWrapper
 
 
 class Core:
@@ -159,7 +161,26 @@ class Core:
                 with open(file_path, 'r') as f:
                     data = json.load(f)
                     f.close()
-                return data
+                    command = data['command']
+                    description = data['description']
+                    availability = data['availability']
+                    paramaters = data['paramaters']
+                    basic_info = f'Command: {command} \nDescription: {description} \nAvailability: {availability}\nParameters:'
+                    headers = ['Parameter', 'Min', 'Definition', 'Type']
+                    table = []
+                    t = TextWrapper(width=30)
+                    for row in paramaters:
+                        row_data = []
+                        for key in row:
+                            if key == 'Definition':
+                                row_data.append(t.fill(row[key]))
+                            else:
+                                row_data.append(row[key])
+                        table.append(row_data)
+
+                    paramaters_table = tabulate(
+                        table, headers, tablefmt="fancy_grid")
+                    return basic_info, paramaters_table
         else:
             return 'Command not found'
 
