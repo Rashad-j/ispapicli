@@ -96,7 +96,7 @@ class Core:
                 return 'msg', msg
             else:
                 msg = 'Command is not recognized!'
-                return 'msg', msg
+                return 'cmd_unknown', msg
         # case of first time use or session expired
         else:
             result, msg = self.login(args, session_status)
