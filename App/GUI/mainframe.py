@@ -10,61 +10,30 @@ class WidgetGallery(QDialog):
 
         self.originalPalette = QApplication.palette()
 
-        styleComboBox = QComboBox()
-        styleComboBox.addItems(QStyleFactory.keys())
-
-        styleLabel = QLabel("&Style:")
-        styleLabel.setBuddy(styleComboBox)
-
-        self.useStylePaletteCheckBox = QCheckBox(
-            "&Use style's standard palette")
-        self.useStylePaletteCheckBox.setChecked(True)
-
-        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
-
-        self.createTopLeftGroupBox()
-        self.createTopRightGroupBox()
-        self.createBottomLeftTabWidget()
-        self.createBottomRightGroupBox()
+        self.createTopGroupBox()
+        self.createLeftGroupBox()
+        self.createMiddleTabWidget()
+        self.createRightGroupBox()
         self.createProgressBar()
 
-        styleComboBox.activated[str].connect(self.changeStyle)
-        self.useStylePaletteCheckBox.toggled.connect(self.changePalette)
-        disableWidgetsCheckBox.toggled.connect(
-            self.topLeftGroupBox.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(
-            self.topRightGroupBox.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(
-            self.bottomLeftTabWidget.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(
-            self.bottomRightGroupBox.setDisabled)
-
-        topLayout = QHBoxLayout()
-        topLayout.addWidget(styleLabel)
-        topLayout.addWidget(styleComboBox)
-        topLayout.addStretch(1)
-        topLayout.addWidget(self.useStylePaletteCheckBox)
-        topLayout.addWidget(disableWidgetsCheckBox)
-
         mainLayout = QGridLayout()
-        mainLayout.addLayout(topLayout, 0, 0, 1, 2)
-        mainLayout.addWidget(self.topLeftGroupBox, 1, 0)
-        mainLayout.addWidget(self.topRightGroupBox, 1, 1)
-        mainLayout.addWidget(self.bottomLeftTabWidget, 2, 0)
-        mainLayout.addWidget(self.bottomRightGroupBox, 2, 1)
-        mainLayout.addWidget(self.progressBar, 3, 0, 1, 2)
+        mainLayout.addLayout(self.topLayout, 0, 0, 1, 3)
+        mainLayout.addWidget(self.leftGroupBox, 1, 0)
+        mainLayout.addWidget(self.middleGroupBox, 1, 1)
+        mainLayout.addWidget(self.rightGroupBox, 1, 2)
+        mainLayout.addWidget(self.progressBar, 2, 0, 1, 3)
         mainLayout.setRowStretch(1, 1)
-        mainLayout.setRowStretch(2, 1)
-        mainLayout.setColumnStretch(0, 1)
-        mainLayout.setColumnStretch(1, 1)
+        mainLayout.setColumnStretch(0, 2)
+        mainLayout.setColumnStretch(1, 3)
+        mainLayout.setColumnStretch(2, 2)
         self.setLayout(mainLayout)
 
-        self.setWindowTitle("Styles")
+        self.setWindowTitle("ISPAPI-CLI Tool")
         self.changeStyle('Fusion')
 
     def changeStyle(self, styleName):
         QApplication.setStyle(QStyleFactory.create(styleName))
-        self.changePalette()
+        # self.changePalette()
 
     def changePalette(self):
         if (self.useStylePaletteCheckBox.isChecked()):
@@ -77,50 +46,46 @@ class WidgetGallery(QDialog):
         maxVal = self.progressBar.maximum()
         self.progressBar.setValue(curVal + (maxVal - curVal) / 100)
 
-    def createTopLeftGroupBox(self):
-        self.topLeftGroupBox = QGroupBox("Group 1")
+    def createTopGroupBox(self):
+        executeBtn = QPushButton("Execute")
+        clearBtn = QPushButton("Clear")
+        cmdTxt = QLineEdit()
+        cmdTxt.setPlaceholderText("Enter command here...")
+        nameLabel = QLabel(self)
+        nameLabel.setText('Command:')
 
-        radioButton1 = QRadioButton("Radio button 1")
-        radioButton2 = QRadioButton("Radio button 2")
-        radioButton3 = QRadioButton("Radio button 3")
-        radioButton1.setChecked(True)
+        gridLayout = QGridLayout()
+        gridLayout.addWidget(nameLabel,  0, 0, 1, 1)
+        gridLayout.addWidget(cmdTxt,     0, 1, 1, 1)
+        gridLayout.addWidget(executeBtn, 0, 2, 1, 1)
+        gridLayout.addWidget(clearBtn,   0, 3, 1, 1)
+        gridLayout.setRowStretch(1, 1)
+        gridLayout.setContentsMargins(0, 20, 0, 20)
+        self.topLayout = gridLayout
 
-        checkBox = QCheckBox("Tri-state check box")
-        checkBox.setTristate(True)
-        checkBox.setCheckState(Qt.PartiallyChecked)
+    def createLeftGroupBox(self):
+        self.leftGroupBox = QGroupBox("Command extracted")
 
-        layout = QVBoxLayout()
-        layout.addWidget(radioButton1)
-        layout.addWidget(radioButton2)
-        layout.addWidget(radioButton3)
-        layout.addWidget(checkBox)
-        layout.addStretch(1)
-        self.topLeftGroupBox.setLayout(layout)
+        textEdit = QTextEdit()
 
-    def createTopRightGroupBox(self):
-        self.topRightGroupBox = QGroupBox("Group 2")
+        textEdit.setPlainText("Twinkle, twinkle, little star,\n"
+                              "How I wonder what you are.\n"
+                              "Up above the world so high,\n"
+                              "Like a diamond in the sky.\n"
+                              "Twinkle, twinkle, little star,\n"
+                              "How I wonder what you are!\n")
 
-        defaultPushButton = QPushButton("Default Push Button")
-        defaultPushButton.setDefault(True)
+        tab2hbox = QHBoxLayout()
+        tab2hbox.setContentsMargins(5, 5, 5, 5)
+        tab2hbox.addWidget(textEdit)
 
-        togglePushButton = QPushButton("Toggle Push Button")
-        togglePushButton.setCheckable(True)
-        togglePushButton.setChecked(True)
+        self.leftGroupBox.setLayout(tab2hbox)
 
-        flatPushButton = QPushButton("Flat Push Button")
-        flatPushButton.setFlat(True)
-
-        layout = QVBoxLayout()
-        layout.addWidget(defaultPushButton)
-        layout.addWidget(togglePushButton)
-        layout.addWidget(flatPushButton)
-        layout.addStretch(1)
-        self.topRightGroupBox.setLayout(layout)
-
-    def createBottomLeftTabWidget(self):
-        self.bottomLeftTabWidget = QTabWidget()
-        self.bottomLeftTabWidget.setSizePolicy(QSizePolicy.Preferred,
-                                               QSizePolicy.Ignored)
+    def createMiddleTabWidget(self):
+        self.middleGroupBox = QGroupBox("Results")
+        middleTabWidget = QTabWidget()
+        middleTabWidget.setSizePolicy(QSizePolicy.Preferred,
+                                      QSizePolicy.Ignored)
 
         tab1 = QWidget()
         tableWidget = QTableWidget(10, 10)
@@ -144,43 +109,30 @@ class WidgetGallery(QDialog):
         tab2hbox.setContentsMargins(5, 5, 5, 5)
         tab2hbox.addWidget(textEdit)
         tab2.setLayout(tab2hbox)
-
-        self.bottomLeftTabWidget.addTab(tab1, "&Table")
-        self.bottomLeftTabWidget.addTab(tab2, "Text &Edit")
-
-    def createBottomRightGroupBox(self):
-        self.bottomRightGroupBox = QGroupBox("Group 3")
-        self.bottomRightGroupBox.setCheckable(True)
-        self.bottomRightGroupBox.setChecked(True)
-
-        lineEdit = QLineEdit('s3cRe7')
-        lineEdit.setEchoMode(QLineEdit.Password)
-
-        spinBox = QSpinBox(self.bottomRightGroupBox)
-        spinBox.setValue(50)
-
-        dateTimeEdit = QDateTimeEdit(self.bottomRightGroupBox)
-        dateTimeEdit.setDateTime(QDateTime.currentDateTime())
-
-        slider = QSlider(Qt.Horizontal, self.bottomRightGroupBox)
-        slider.setValue(40)
-
-        scrollBar = QScrollBar(Qt.Horizontal, self.bottomRightGroupBox)
-        scrollBar.setValue(60)
-
-        dial = QDial(self.bottomRightGroupBox)
-        dial.setValue(30)
-        dial.setNotchesVisible(True)
+        middleTabWidget.addTab(tab1, "Table")
+        middleTabWidget.addTab(tab2, "Plain")
 
         layout = QGridLayout()
-        layout.addWidget(lineEdit, 0, 0, 1, 2)
-        layout.addWidget(spinBox, 1, 0, 1, 2)
-        layout.addWidget(dateTimeEdit, 2, 0, 1, 2)
-        layout.addWidget(slider, 3, 0)
-        layout.addWidget(scrollBar, 4, 0)
-        layout.addWidget(dial, 3, 1, 2, 1)
-        layout.setRowStretch(5, 1)
-        self.bottomRightGroupBox.setLayout(layout)
+        layout.addWidget(middleTabWidget, 0, 0, 1, 1)
+
+        self.middleGroupBox.setLayout(layout)
+
+    def createRightGroupBox(self):
+        self.rightGroupBox = QGroupBox("Quick access")
+
+        loginBox = QGridLayout()
+        userIDTxt = QLineEdit()
+        passTxt = QLineEdit()
+        passTxt.setEchoMode(QLineEdit.Password)
+
+        formLayout = QFormLayout()
+        formLayout.addRow(self.tr("ID:"), userIDTxt)
+        formLayout.addRow(self.tr("Pwd:"), passTxt)
+
+        layout = QGridLayout()
+        layout.addLayout(formLayout, 0, 0)
+
+        self.rightGroupBox.setLayout(layout)
 
     def createProgressBar(self):
         self.progressBar = QProgressBar()
