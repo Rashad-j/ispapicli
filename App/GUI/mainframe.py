@@ -15,8 +15,10 @@ class WidgetGallery(QDialog):
         self.createMiddleTabWidget()
         self.createRightGroupBox()
         self.createProgressBar()
+        self.createMenubar()
 
         mainLayout = QGridLayout()
+        mainLayout.setMenuBar(self.menuBar)
         mainLayout.addLayout(self.topLayout, 0, 0, 1, 3)
         mainLayout.addWidget(self.leftGroupBox, 1, 0)
         mainLayout.addWidget(self.middleGroupBox, 1, 1)
@@ -45,6 +47,31 @@ class WidgetGallery(QDialog):
         curVal = self.progressBar.value()
         maxVal = self.progressBar.maximum()
         self.progressBar.setValue(curVal + (maxVal - curVal) / 100)
+
+    def createMenubar(self):
+
+        self.menuBar = QMenuBar()
+        file = self.menuBar.addMenu("File")
+        file.addAction("New")
+
+        save = QAction("Save", self)
+        save.setShortcut("Ctrl+S")
+        file.addAction(save)
+
+        edit = file.addMenu("Edit")
+        edit.addAction("copy")
+        edit.addAction("paste")
+
+        quit = QAction("Quit", self)
+        file.addAction(quit)
+        file.triggered[QAction].connect(self.processtrigger)
+
+    def processtrigger(self, q):
+        print(q.text()+" is triggered")
+
+    def close_application(self):
+        print("whooaaaa so custom!!!")
+        sys.exit()
 
     def createTopGroupBox(self):
         executeBtn = QPushButton("Execute")
@@ -145,9 +172,7 @@ class WidgetGallery(QDialog):
 
 
 if __name__ == '__main__':
-
     import sys
-
     app = QApplication(sys.argv)
     gallery = WidgetGallery()
     gallery.show()
