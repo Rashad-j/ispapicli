@@ -9,22 +9,23 @@ class MainFrame(QDialog):
         super(MainFrame, self).__init__(parent)
 
         self.originalPalette = QApplication.palette()
-
         self.createTopGroupBox()
         self.createLeftGroupBox()
         self.createMiddleTabWidget()
         self.createRightGroupBox()
         self.createProgressBar()
         self.createMenubar()
+        self.createToolbar()
 
         mainLayout = QGridLayout()
         mainLayout.setMenuBar(self.menuBar)
-        mainLayout.addLayout(self.topLayout, 0, 0, 1, 3)
-        mainLayout.addWidget(self.leftGroupBox, 1, 0)
-        mainLayout.addWidget(self.middleGroupBox, 1, 1)
-        mainLayout.addWidget(self.rightGroupBox, 1, 2)
-        mainLayout.addWidget(self.progressBar, 2, 0, 1, 3)
-        mainLayout.setRowStretch(1, 1)
+        mainLayout.addWidget(self.toolbar, 0, 0, 1, 3)
+        mainLayout.addLayout(self.topLayout, 1, 0, 1, 3)
+        mainLayout.addWidget(self.leftGroupBox, 2, 0)
+        mainLayout.addWidget(self.middleGroupBox, 2, 1)
+        mainLayout.addWidget(self.rightGroupBox, 2, 2)
+        mainLayout.addWidget(self.progressBar, 3, 0, 1, 3)
+        mainLayout.setRowStretch(2, 2)
         mainLayout.setColumnStretch(0, 2)
         mainLayout.setColumnStretch(1, 3)
         mainLayout.setColumnStretch(2, 2)
@@ -48,6 +49,36 @@ class MainFrame(QDialog):
         maxVal = self.progressBar.maximum()
         self.progressBar.setValue(curVal + (maxVal - curVal) / 100)
 
+    def onMyToolBarButtonClick(self, s):
+        print("click", s)
+
+    def createToolbar(self):
+        self.toolbar = QToolBar("My main toolbar")
+        self.toolbar.setIconSize(QSize(20, 20))
+        saveAction = QAction(
+            QIcon("../icons/save.png"), "Save results to JSON file", self)
+        saveAction.triggered.connect(self.onMyToolBarButtonClick)
+
+        copyAction = QAction(
+            QIcon("../icons/copy.png"), "Copy the results to clipboard", self)
+        copyAction.triggered.connect(self.onMyToolBarButtonClick)
+
+        helpAction = QAction(
+            QIcon("../icons/help.png"), "See help documentation", self)
+        helpAction.triggered.connect(self.onMyToolBarButtonClick)
+
+        openAction = QAction(
+            QIcon("../icons/new.png"), "Open another window", self)
+        openAction.triggered.connect(self.onMyToolBarButtonClick)
+
+        seperator = QAction(self)
+        seperator.setSeparator(True)
+        self.toolbar.addAction(openAction)
+        self.toolbar.addAction(saveAction)
+        self.toolbar.addAction(copyAction)
+        self.toolbar.addAction(seperator)
+        self.toolbar.addAction(helpAction)
+
     def createMenubar(self):
 
         self.menuBar = QMenuBar()
@@ -69,13 +100,6 @@ class MainFrame(QDialog):
 
         file.triggered[QAction].connect(self.processtrigger)
 
-    def processtrigger(self, q):
-        print(q.text()+" is triggered")
-
-    def close_application(self):
-        print("exiting")
-        sys.exit()
-
     def createTopGroupBox(self):
         executeBtn = QPushButton("Execute")
         clearBtn = QPushButton("Clear")
@@ -90,7 +114,7 @@ class MainFrame(QDialog):
         gridLayout.addWidget(executeBtn, 0, 2, 1, 1)
         gridLayout.addWidget(clearBtn,   0, 3, 1, 1)
         gridLayout.setRowStretch(1, 1)
-        gridLayout.setContentsMargins(0, 20, 0, 20)
+        gridLayout.setContentsMargins(0, 5, 0, 10)
         self.topLayout = gridLayout
 
     def createLeftGroupBox(self):
@@ -168,10 +192,19 @@ class MainFrame(QDialog):
         self.progressBar = QProgressBar()
         self.progressBar.setRange(0, 10000)
         self.progressBar.setValue(0)
+        self.progressBar.setMaximumHeight(10)
+        self.progressBar.setTextVisible(False)
 
         timer = QTimer(self)
         timer.timeout.connect(self.advanceProgressBar)
         timer.start(1000)
+
+    def processtrigger(self, q):
+        print(q.text()+" is triggered")
+
+    def close_application(self):
+        print("exiting")
+        sys.exit()
 
 
 if __name__ == '__main__':
