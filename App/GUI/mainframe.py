@@ -4,9 +4,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 
-class WidgetGallery(QDialog):
+class MainFrame(QDialog):
     def __init__(self, parent=None):
-        super(WidgetGallery, self).__init__(parent)
+        super(MainFrame, self).__init__(parent)
 
         self.originalPalette = QApplication.palette()
 
@@ -53,24 +53,27 @@ class WidgetGallery(QDialog):
         self.menuBar = QMenuBar()
         file = self.menuBar.addMenu("File")
         file.addAction("New")
-
         save = QAction("Save", self)
         save.setShortcut("Ctrl+S")
         file.addAction(save)
+        quit = QAction("Quit", self)
+        file.addAction(quit)
 
-        edit = file.addMenu("Edit")
+        edit = self.menuBar.addMenu("Edit")
         edit.addAction("copy")
         edit.addAction("paste")
 
-        quit = QAction("Quit", self)
-        file.addAction(quit)
+        help = self.menuBar.addMenu("Help")
+        help.addAction("How to?")
+        help.addAction("About ISPAPI tool")
+
         file.triggered[QAction].connect(self.processtrigger)
 
     def processtrigger(self, q):
         print(q.text()+" is triggered")
 
     def close_application(self):
-        print("whooaaaa so custom!!!")
+        print("exiting")
         sys.exit()
 
     def createTopGroupBox(self):
@@ -174,6 +177,6 @@ class WidgetGallery(QDialog):
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
-    gallery = WidgetGallery()
+    gallery = MainFrame()
     gallery.show()
     sys.exit(app.exec_())
