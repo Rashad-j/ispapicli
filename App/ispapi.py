@@ -6,7 +6,9 @@ import argparse
 from hexonet.apiconnector.response import Response
 from pathlib import Path
 from modules.core import Core
+from gui.mainframe import MainFrame
 import textwrap
+from PyQt5.QtWidgets import QApplication
 
 
 def main(args):
@@ -55,8 +57,10 @@ def main(args):
 
 
 def startGUI():
-    print("Gui Started")
-    sys.exit(0)
+    app = QApplication(sys.argv)
+    appGui = MainFrame()
+    appGui.startGui()
+    sys.exit(app.exec_())
 
 
 def errorFunction(message):

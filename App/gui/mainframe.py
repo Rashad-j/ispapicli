@@ -2,9 +2,10 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from modules.core import Core
 
 
-class MainFrame(QDialog):
+class MainFrame(QWidget):
     def __init__(self, parent=None):
         super(MainFrame, self).__init__(parent)
 
@@ -30,7 +31,6 @@ class MainFrame(QDialog):
         mainLayout.setColumnStretch(1, 3)
         mainLayout.setColumnStretch(2, 2)
         self.setLayout(mainLayout)
-
         self.setWindowTitle("ISPAPI-CLI Tool")
         self.changeStyle('Fusion')
 
@@ -56,20 +56,24 @@ class MainFrame(QDialog):
         self.toolbar = QToolBar("My main toolbar")
         self.toolbar.setIconSize(QSize(20, 20))
         saveAction = QAction(
-            QIcon("../icons/save.png"), "Save results to JSON file", self)
+            QIcon("icons/save.png"), "Save results to JSON file", self)
         saveAction.triggered.connect(self.onMyToolBarButtonClick)
 
         copyAction = QAction(
-            QIcon("../icons/copy.png"), "Copy the results to clipboard", self)
+            QIcon("icons/copy.png"), "Copy the results to clipboard", self)
         copyAction.triggered.connect(self.onMyToolBarButtonClick)
 
         helpAction = QAction(
-            QIcon("../icons/help.png"), "See help documentation", self)
+            QIcon("icons/help.png"), "See help documentation", self)
         helpAction.triggered.connect(self.onMyToolBarButtonClick)
 
         openAction = QAction(
-            QIcon("../icons/new.png"), "Open another window", self)
+            QIcon("icons/new.png"), "Open another window", self)
         openAction.triggered.connect(self.onMyToolBarButtonClick)
+
+        sessionTime = QLabel("Session time: 00:00:00")
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         seperator = QAction(self)
         seperator.setSeparator(True)
@@ -78,21 +82,29 @@ class MainFrame(QDialog):
         self.toolbar.addAction(copyAction)
         self.toolbar.addAction(seperator)
         self.toolbar.addAction(helpAction)
+        self.toolbar.addWidget(spacer)
+        self.toolbar.addWidget(sessionTime)
 
     def createMenubar(self):
 
         self.menuBar = QMenuBar()
         file = self.menuBar.addMenu("File")
-        file.addAction("New")
-        save = QAction("Save", self)
+        new = QAction("New window", self)
+        new.setShortcut("Ctrl+n")
+        save = QAction("Save to file", self)
         save.setShortcut("Ctrl+S")
-        file.addAction(save)
         quit = QAction("Quit", self)
+        quit.setShortcut("Ctrl+q")
+
+        file.addAction(new)
+        file.addAction(save)
         file.addAction(quit)
 
         edit = self.menuBar.addMenu("Edit")
-        edit.addAction("copy")
-        edit.addAction("paste")
+        copy = QAction("Copy", self)
+        copy.setShortcut("Ctrl+c")
+
+        edit.addAction(copy)
 
         help = self.menuBar.addMenu("Help")
         help.addAction("How to?")
@@ -102,7 +114,15 @@ class MainFrame(QDialog):
 
     def createTopGroupBox(self):
         executeBtn = QPushButton("Execute")
+        executeBtn.setIcon(QIcon("icons/execute.png"))
+        executeBtn.setIconSize(QSize(14, 14))
+        executeBtn.setLayoutDirection(Qt.RightToLeft)
+
         clearBtn = QPushButton("Clear")
+        clearBtn.setIcon(QIcon("icons/cross.png"))
+        clearBtn.setIconSize(QSize(14, 14))
+        clearBtn.setLayoutDirection(Qt.RightToLeft)
+
         cmdTxt = QLineEdit()
         cmdTxt.setPlaceholderText("Enter command here...")
         nameLabel = QLabel(self)
@@ -178,15 +198,27 @@ class MainFrame(QDialog):
         userIDTxt = QLineEdit()
         passTxt = QLineEdit()
         passTxt.setEchoMode(QLineEdit.Password)
+        sysChoice = QComboBox()
+        sysChoice.addItems(['live', 'ote'])
+        loginMsg = QLabel("Your session expired!")
+        loginMsg.setAlignment(Qt.AlignCenter)
+
+        loginBtn = QPushButton("Login")
+        loginBtn.clicked.connect(self.login)
 
         formLayout = QFormLayout()
-        formLayout.addRow(self.tr("ID:"), userIDTxt)
-        formLayout.addRow(self.tr("Pwd:"), passTxt)
-
+        formLayout.addRow(self.tr("Your ID:"), userIDTxt)
+        formLayout.addRow(self.tr("Password:"), passTxt)
+        formLayout.addRow(self.tr("System:"), sysChoice)
+        formLayout.addRow(self.tr(""), loginBtn)
+        formLayout.addRow(self.tr("Status:"), loginMsg)
         layout = QGridLayout()
         layout.addLayout(formLayout, 0, 0)
 
         self.rightGroupBox.setLayout(layout)
+
+    def login(self):
+        print("ok")
 
     def createProgressBar(self):
         self.progressBar = QProgressBar()
@@ -206,10 +238,18 @@ class MainFrame(QDialog):
         print("exiting")
         sys.exit()
 
+    def startGui(self):
+        geo = QDesktopWidget().availableGeometry()
 
-if __name__ == '__main__':
-    import sys
-    app = QApplication(sys.argv)
-    gallery = MainFrame()
-    gallery.show()
-    sys.exit(app.exec_())
+        screenWidth = geo.width()
+        screenHeight = geo.height()
+        width = int(screenWidth * 0.5)
+        height = int(screenHeight * 0.5)
+        self.resize(width, height)
+
+        frameGeo = self.frameGeometry()
+        cp = geo.center()
+        frameGeo.moveCenter(cp)
+        self.move(frameGeo.topLeft())
+
+        self.show()
