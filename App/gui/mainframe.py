@@ -205,6 +205,9 @@ class MainFrame(QWidget):
 
         loginBtn = QPushButton("Login")
         loginBtn.clicked.connect(self.login)
+        loginBtn.setIcon(QIcon("icons/login.png"))
+        loginBtn.setIconSize(QSize(14, 14))
+        loginBtn.setLayoutDirection(Qt.RightToLeft)
 
         formLayout = QFormLayout()
         formLayout.addRow(self.tr("Your ID:"), userIDTxt)
