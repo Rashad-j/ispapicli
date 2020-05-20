@@ -20,10 +20,11 @@ def main(args):
     args = vars(parser.parse_args(splitted_args))
     reminderargs = args['args']
     try:
+        # parse command args
         result, data = core_obj.parseArgs(args, reminderargs)
         if result == 'gui':
             startGUI()
-        if result == 'help':
+        elif result == 'help':
             print('\n')
             print(textwrap.dedent('''\
                 ISPAPI - Commandline Tool
@@ -35,21 +36,29 @@ def main(args):
 
                 '''))
             parser.print_help()
-        if result == 'help_command':
+        elif result == 'help_command':
             if type(data) == str:
                 print(data)
             else:
                 print('\nCommand info: \n')
                 print(data[0])
                 print(data[1])
-        if result == 'msg':
+        elif result == 'msg':
             print(data)
-        if result == 'cmd':
+        elif result == 'cmd':
             response = core_obj.request(data)
             result = core_obj.getResponse(response)
             print(result)
-        if result == 'list':
+        elif result == 'list':
             print((data))
+
+        elif result == 'logout':
+            status, msg = data
+            print(msg)
+
+        else:
+            print('unknown results')
+
         sys.exit(0)
 
     except Exception as e:
@@ -69,4 +78,11 @@ def errorFunction(message):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+
+    argsLen = len(sys.argv)
+    # if gui triggred
+    # if argsLen == 0: # after finishing debugging mode
+    if argsLen == 1:  # only in debugging mode
+        startGUI()
+    else:
+        main(sys.argv[1:])

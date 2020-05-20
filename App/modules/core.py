@@ -66,8 +66,8 @@ class Core:
 
     def parseArgs(self, args, parameters):
         if args['logout'] is not None:
-            result = self.logout()
-            return 'msg', result
+            result, msg = self.logout()
+            return 'logout', {result, msg}
         if args['gui'] is not None:
             return 'gui', {}
         if args['help'] is not None:
@@ -135,12 +135,11 @@ class Core:
             msg = "Your session expired. Please login again: you can use the command: -u = <your user id> -p = <your password> -e = {ote,live}"
             return False, msg
 
-    def checkSession(self, args):
+    def checkSession(self, args=''):
         data = {}
         # check if there is a session already exist
         try:
-            path = Path(__file__).parent / "../config/session.json"
-            with path.open('r') as f:
+            with self.session_path.open('r') as f:
                 data = json.load(f)
                 f.close()
             entity = data['entity']
@@ -164,8 +163,7 @@ class Core:
     def logout(self):
         try:
             msg = ''
-            path = self.session_path
-            with path.open('r') as f:
+            with self.session_path.open('r') as f:
                 data = json.load(f)
                 f.close()
             entity = data['entity']
@@ -182,17 +180,17 @@ class Core:
             # delete local session
             path = Path(__file__).parent / "../config/session.json"
             if os.path.exists(path):
-                os.remove(path)
+                os.remove(path)  # delete local session
                 if flag:
-                    return 'Successfully logged out!'
+                    return True, 'Successfully logged out!'
                 else:
-                    return 'Local session delered but remote session was not!'
+                    return True, 'Local session deleted but remote session was not!'
             else:
-                return 'Session already deleted'
+                return True, 'Session already deleted'
 
         except Exception as e:
             msg = "Couldn't delete remote session due to: " + str(e)
-            return msg
+            return False, msg
 
     def request(self, commands):
         # get commands in dictionary format

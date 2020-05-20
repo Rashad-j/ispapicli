@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from modules.core import Core
+from gui.login import LoginWindow
 
 
 class MainFrame(QWidget):
@@ -13,7 +14,6 @@ class MainFrame(QWidget):
         self.createTopGroupBox()
         self.createLeftGroupBox()
         self.createMiddleTabWidget()
-        self.createRightGroupBox()
         self.createProgressBar()
         self.createMenubar()
         self.createToolbar()
@@ -24,25 +24,50 @@ class MainFrame(QWidget):
         mainLayout.addLayout(self.topLayout, 1, 0, 1, 3)
         mainLayout.addWidget(self.leftGroupBox, 2, 0)
         mainLayout.addWidget(self.middleGroupBox, 2, 1)
-        mainLayout.addWidget(self.rightGroupBox, 2, 2)
         mainLayout.addWidget(self.progressBar, 3, 0, 1, 3)
         mainLayout.setRowStretch(2, 2)
-        mainLayout.setColumnStretch(0, 2)
+        mainLayout.setColumnStretch(0, 1)
         mainLayout.setColumnStretch(1, 3)
-        mainLayout.setColumnStretch(2, 2)
         self.setLayout(mainLayout)
         self.setWindowTitle("ISPAPI-CLI Tool")
-        self.changeStyle('Fusion')
 
-    def changeStyle(self, styleName):
-        QApplication.setStyle(QStyleFactory.create(styleName))
-        # self.changePalette()
+        # set app gui style
+        QApplication.setStyle(QStyleFactory.create('Fusion'))
 
-    def changePalette(self):
-        if (self.useStylePaletteCheckBox.isChecked()):
-            QApplication.setPalette(QApplication.style().standardPalette())
+        # check user session upon start
+        self.checkLogin()
+
+    def checkLogin(self):
+        coreLogic = Core()
+        result = coreLogic.checkSession()
+        if result == 'valid':
+            self.sessionTime.setText("You session is valid. ")
+            self.sessionTime.setStyleSheet("color:green")
+            self.loginBtn.setIcon(QIcon("icons/logout.png"))
+            self.loginBtn.setText('Logout')
+            self.loginBtn.clicked.connect(self.logout)
+
         else:
-            QApplication.setPalette(self.originalPalette)
+            self.sessionTime.setText("Session expired! ")
+            self.sessionTime.setStyleSheet("color:red")
+            self.loginBtn.setIcon(QIcon("icons/login.png"))
+            self.loginBtn.setText('Login')
+            self.loginBtn.clicked.connect(self.openLoginWindow)
+        # in bothcases check if the gui disabled or enabled
+        self.disableEnableGui()
+
+    def logout(self):
+        print('called logout')
+        coreLogic = Core()
+        result, msg = coreLogic.logout()
+        # check if logout success
+        alert = QMessageBox()
+        alert.setText(msg)
+        alert.exec_()
+
+    def disableEnableGui(self, status=''):
+        # todo
+        pass
 
     def advanceProgressBar(self):
         curVal = self.progressBar.value()
@@ -71,9 +96,16 @@ class MainFrame(QWidget):
             QIcon("icons/new.png"), "Open another window", self)
         openAction.triggered.connect(self.onMyToolBarButtonClick)
 
-        sessionTime = QLabel("Session time: 00:00:00")
+        self.sessionTime = QLabel("Checking your session... ")
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+        self.loginBtn = QPushButton("Login")
+        self.loginBtn.setIcon(QIcon("icons/login.png"))
+        self.loginBtn.setStyleSheet(
+            "padding: 2px; padding-left: 6px")
+        self.loginBtn.setIconSize(QSize(12, 12))
+        self.loginBtn.setLayoutDirection(Qt.RightToLeft)
 
         seperator = QAction(self)
         seperator.setSeparator(True)
@@ -83,7 +115,8 @@ class MainFrame(QWidget):
         self.toolbar.addAction(seperator)
         self.toolbar.addAction(helpAction)
         self.toolbar.addWidget(spacer)
-        self.toolbar.addWidget(sessionTime)
+        self.toolbar.addWidget(self.sessionTime)
+        self.toolbar.addWidget(self.loginBtn)
 
     def createMenubar(self):
 
@@ -110,7 +143,7 @@ class MainFrame(QWidget):
         help.addAction("How to?")
         help.addAction("About ISPAPI tool")
 
-        file.triggered[QAction].connect(self.processtrigger)
+        file.triggered[QAction].connect(self.processTrigger)
 
     def createTopGroupBox(self):
         executeBtn = QPushButton("Execute")
@@ -191,37 +224,10 @@ class MainFrame(QWidget):
 
         self.middleGroupBox.setLayout(layout)
 
-    def createRightGroupBox(self):
-        self.rightGroupBox = QGroupBox("Quick access")
-
-        loginBox = QGridLayout()
-        userIDTxt = QLineEdit()
-        passTxt = QLineEdit()
-        passTxt.setEchoMode(QLineEdit.Password)
-        sysChoice = QComboBox()
-        sysChoice.addItems(['live', 'ote'])
-        loginMsg = QLabel("Your session expired!")
-        loginMsg.setAlignment(Qt.AlignCenter)
-
-        loginBtn = QPushButton("Login")
-        loginBtn.clicked.connect(self.login)
-        loginBtn.setIcon(QIcon("icons/login.png"))
-        loginBtn.setIconSize(QSize(14, 14))
-        loginBtn.setLayoutDirection(Qt.RightToLeft)
-
-        formLayout = QFormLayout()
-        formLayout.addRow(self.tr("Your ID:"), userIDTxt)
-        formLayout.addRow(self.tr("Password:"), passTxt)
-        formLayout.addRow(self.tr("System:"), sysChoice)
-        formLayout.addRow(self.tr(""), loginBtn)
-        formLayout.addRow(self.tr("Status:"), loginMsg)
-        layout = QGridLayout()
-        layout.addLayout(formLayout, 0, 0)
-
-        self.rightGroupBox.setLayout(layout)
-
-    def login(self):
-        print("ok")
+    def openLoginWindow(self):
+        print('called login')
+        loginGui = LoginWindow(self)
+        loginGui.startGui()
 
     def createProgressBar(self):
         self.progressBar = QProgressBar()
@@ -234,10 +240,10 @@ class MainFrame(QWidget):
         timer.timeout.connect(self.advanceProgressBar)
         timer.start(1000)
 
-    def processtrigger(self, q):
+    def processTrigger(self, q):
         print(q.text()+" is triggered")
 
-    def close_application(self):
+    def closeApplication(self):
         print("exiting")
         sys.exit()
 
@@ -255,4 +261,5 @@ class MainFrame(QWidget):
         frameGeo.moveCenter(cp)
         self.move(frameGeo.topLeft())
 
+        # start gui
         self.show()
