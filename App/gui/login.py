@@ -4,6 +4,8 @@ from PyQt5.QtGui import QIcon, QMovie
 from modules.core import Core
 import time
 import threading
+import logging
+import sys
 
 
 class LoginWindow(QDialog):
@@ -48,9 +50,6 @@ class LoginWindow(QDialog):
     def login(self):
         myMovie = QMovie("icons/loading.gif")
         myMovie.setScaledSize(QSize(18, 18))
-        # self.loginBtn.setIcon(QIcon(myMovie.currentPixmap()))
-        #self.loginBtn.setIconSize(QSize(14, 14))
-        # self.loginBtn.setLayoutDirection(Qt.RightToLeft)
         self.loginMsg.setMovie(myMovie)
         myMovie.start()
 
@@ -68,13 +67,26 @@ class LoginWindow(QDialog):
 
             # update parent window = login and session message
             self.parent().checkLogin()
+            # close login gui
+            self.closingThread = threading.Thread(
+                target=self.__closeGui).start()
 
-            # close window
-            self.close()
         else:
             self.loginMsg.setMovie(None)
             self.loginMsg.setText(msg)
             self.loginMsg.setStyleSheet("color:red")
+
+    def __closeGui(self):
+        # disable login button
+        self.loginBtn.setDisabled(True)
+        for i in range(3, -1, -1):
+            self.loginMsg.setText("Closing the window in "+str(i)+"s")
+            time.sleep(1)
+        else:
+            try:
+                self.close()
+            except Exception as e:
+                pass
 
     def startGui(self):
 

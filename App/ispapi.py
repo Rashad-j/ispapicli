@@ -12,14 +12,14 @@ from PyQt5.QtWidgets import QApplication
 
 
 def main(args):
-
     core_obj = Core()
     parser, splitted_args = core_obj.initParser(args)
     # overwrite defualt error function with our local function
     parser.error = errorFunction
-    args = vars(parser.parse_args(splitted_args))
-    reminderargs = args['args']
     try:
+        # get command and its args
+        args = vars(parser.parse_args(splitted_args))
+        reminderargs = args['args']
         # parse command args
         result, data = core_obj.parseArgs(args, reminderargs)
         if result == 'gui':
@@ -73,7 +73,7 @@ def startGUI():
 
 
 def errorFunction(message):
-    print('\nAn error happend: ' + message + '\n')
+    print('\nAn error occured: ' + message + '\n')
     sys.exit(0)
 
 
@@ -85,4 +85,5 @@ if __name__ == "__main__":
     if argsLen == 1:  # only in debugging mode
         startGUI()
     else:
+        print(sys.argv)
         main(sys.argv[1:])
