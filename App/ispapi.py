@@ -12,18 +12,34 @@ from PyQt5.QtWidgets import QApplication
 
 
 def main(args):
+
+    # create core logic object
     core_obj = Core()
-    parser, splitted_args = core_obj.initParser(args)
-    # overwrite defualt error function with our local function
+    # get the python standard parser initialised
+    parser = core_obj.initParser(args)
+    # overwrite defualt error function of the parser with our local function
     parser.error = errorFunction
+
+    # clean extra spaces, leave only single spaces among commands
+    original_args = ' '.join(args)
+    # remove extra spaces around the = cases are ' =', '= ', ' = '
+    original_args = original_args.replace(" = ", "=")
+    original_args = original_args.replace(" =", "=")
+    original_args = original_args.replace("= ", "=")
+    # split args in an array
+    splitted_args = original_args.split()
     try:
-        # get command and its args
+        # get main commands such as "-c checkdomain"
         args = vars(parser.parse_args(splitted_args))
+        # get other parameters such as "limit=5"
         reminderargs = args['args']
-        # parse command args
-        result, data = core_obj.parseArgs(args, reminderargs)
+        # execute the command and show the results
+        result, data = core_obj.parseArgs(args)
+        # case gui requested
         if result == 'gui':
             startGUI()
+
+        # case show help requested
         elif result == 'help':
             print('\n')
             print(textwrap.dedent('''\
@@ -36,6 +52,8 @@ def main(args):
 
                 '''))
             parser.print_help()
+
+        # case help of specific command
         elif result == 'help_command':
             if type(data) == str:
                 print(data)
@@ -43,21 +61,34 @@ def main(args):
                 print('\nCommand info: \n')
                 print(data[0])
                 print(data[1])
+
+        # case general message
         elif result == 'msg':
             print(data)
+
+        # case command requested
         elif result == 'cmd':
-            response = core_obj.request(data)
+            # append reminder args with the command
+            params_list = core_obj.parseParameters(reminderargs)
+            cmd = data
+            # add them to data which is the command list
+            cmd.update(params_list)
+            response = core_obj.request(cmd)
             result = core_obj.getResponse(response)
             print(result)
+
+        # list of commands
         elif result == 'list':
             print((data))
 
+        # logout the user and destory the session
         elif result == 'logout':
             status, msg = data
             print(msg)
 
+        # case user entered unknow command
         else:
-            print('unknown results')
+            print(data)
 
         sys.exit(0)
 

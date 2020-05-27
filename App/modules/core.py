@@ -20,7 +20,7 @@ class Core:
         self.command_path = Path(__file__).parent / "../commands/"
         self.session_path = Path(__file__).parent / "../config/session.json"
 
-    def initParser(self, args):
+    def initParser(self, args=None):
         parser = argparse.ArgumentParser(add_help=False)
         parser.prog = 'ispapi'
         parser.formatter_class = argparse.RawDescriptionHelpFormatter
@@ -54,17 +54,10 @@ class Core:
                             help="Update local command list")
         parser.add_argument('--version', '-v', action='version',
                             version='%(prog)s 2.0')
-        # clean extra spaces, leave only single spaces among commands
-        original_args = ' '.join(args)
-        # remove extra spaces around the = cases are ' =', '= ', ' = '
-        original_args = original_args.replace(" = ", "=")
-        original_args = original_args.replace(" =", "=")
-        original_args = original_args.replace("= ", "=")
-        # split args in an array
-        splitted_args = original_args.split()
-        return parser, splitted_args
 
-    def parseArgs(self, args, parameters):
+        return parser
+
+    def parseArgs(self, args):
         if args['logout'] is not None:
             result, msg = self.logout()
             return 'logout', {result, msg}
@@ -85,10 +78,7 @@ class Core:
         if session_status == 'valid':
             if args['command'] is not None:
                 cmd_struct = {}
-                cmd_struct['COMMAND'] = args['command']
-                # append parameters with the command
-                params_list = self.parseParameters(parameters)
-                cmd_struct.update(params_list)
+                cmd_struct['command'] = args['command']
                 return 'cmd', cmd_struct
             # case user trying to log in while his session is valid
             elif None not in (args['userid'], args['password'], args['entity']):
@@ -118,13 +108,13 @@ class Core:
                 # save login session
                 loginSession = self.cl.getSession()
                 # save session
-                self.saveLocalSession(loginSession, entity)
+                self.__saveLocalSession(loginSession, entity)
                 msg = "Login success. Your session valid for one hour max of idle time"
                 return True, msg
             else:
                 desc = r.getDescription()
                 code = r.getCode()
-                msg = "Server error: " + str(code) + " " + desc
+                msg = "Server response: " + str(code) + " " + desc
                 return False, msg
         # initial code running
         elif session_status == 'init':
@@ -198,18 +188,19 @@ class Core:
         return response
 
     def getResponse(self, response, mode=''):
+        # return desired response, plain is default
         code = response.getCode()
         if code == 200:
             # check mode = {hash, plain, list}
             return response.getPlain()
         else:
             description = response.getDescription()
-            message = "Server error: " + str(code) + " " + description
+            message = "Server response: " + str(code) + " " + description
             return message
 
     def getCommandHelp(self, command_name):
         command_name = command_name.lower()
-        path = Path(__file__).parent / "../commands/"
+        path = self.command_path
         data = {}
         files = os.listdir(path)
         for file in files:
@@ -243,7 +234,7 @@ class Core:
         else:
             return f"Command '{command_name}' not found!"
 
-    def saveLocalSession(self, loginSession, entity):
+    def __saveLocalSession(self, loginSession, entity):
         time_format = "%Y-%m-%d %H:%M:%S"
         ts = datetime.now().strftime(time_format)
         data = {}
@@ -275,7 +266,7 @@ class Core:
         return params
 
     def getCommandList(self):
-        path = Path(__file__).parent / "../commands/"
+        path = self.command_path
         data = {}
         c_names = os.listdir(path)
         return_list = ''

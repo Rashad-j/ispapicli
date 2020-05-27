@@ -6,9 +6,10 @@ from modules.core import Core
 from gui.login import LoginWindow
 import textwrap
 import sys
+from io import StringIO
 
 
-class MainFrame(QWidget):
+class MainFrame(QWidget, QThread):
     def __init__(self, parent=None):
         super(MainFrame, self).__init__(parent)
 
@@ -31,7 +32,7 @@ class MainFrame(QWidget):
         mainLayout.addWidget(self.progressBar, 3, 0, 1, 3)
         mainLayout.setRowStretch(2, 2)
         mainLayout.setColumnStretch(0, 2)
-        mainLayout.setColumnStretch(1, 4)
+        mainLayout.setColumnStretch(1, 6)
         self.setLayout(mainLayout)
         self.setWindowTitle("ISPAPI-CLI Tool")
 
@@ -47,10 +48,16 @@ class MainFrame(QWidget):
         # set focus on command input field
         self.cmdTxt.setFocus()
 
+        # commands list
+        self.commandList = {}
+
+        # initilaize command line completer
+        self.initialiseCommandCompleter()
+
     def checkLogin(self):
         result = self.coreLogic.checkSession()
         if result == 'valid':
-            self.sessionTime.setText("You session is valid. ")
+            self.sessionTime.setText("Your session is valid. ")
             self.sessionTime.setStyleSheet("color:green")
             self.loginBtn.setIcon(QIcon("icons/logout.png"))
             self.loginBtn.setText('Logout')
@@ -123,12 +130,15 @@ class MainFrame(QWidget):
         self.progressBar.setMaximumHeight(10)
         self.progressBar.setTextVisible(False)
 
-        # call timer
+        # create a timer for the progress bar
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.advanceProgressBar)
+
+        # call timer with speed of 5
         self.progressBarSpeed(5)
 
     def progressBarSpeed(self, speed):
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.advanceProgressBar)
         self.timer.start(speed)
 
     def onMyToolBarButtonClick(self, s):
@@ -136,24 +146,28 @@ class MainFrame(QWidget):
 
     def executeCommand(self):
         # start progressbar
-        self.progressBarSpeed(20)
-        args = (self.cmdTxt.text()).split()
-        cmdView = (self.commandText.toPlainText()).split()
-        core_obj = Core()
-        parser, splitted_args = core_obj.initParser(args)
-        print(splitted_args)
-        # overwrite defualt error function with our local function
+        self.progressBarSpeed(5)
+
+        # get args from the GUI
+        splitted_args = (self.commandText.toPlainText()).split()
+
+        # intialize the parser
+        core_obj = self.coreLogic
+        parser = core_obj.initParser()
+        # overwrite defualt error function with our local function to show on the GUI
         parser.error = self.errorFunction
+
         try:
             args = vars(parser.parse_args(splitted_args))
             reminderargs = args['args']
             # parse command args
-            result, data = core_obj.parseArgs(args, reminderargs)
+            result, data = core_obj.parseArgs(args)
             # case gui started
             if result == 'gui':
                 self.plainResponse.setText("GUI already started")
             # case of help command
             elif result == 'help':
+                helpText = ''
                 preHelp = textwrap.dedent('''\
                     ISPAPI - Commandline Tool
                     ------------------------------------------------------------
@@ -163,9 +177,21 @@ class MainFrame(QWidget):
                     ------------------------------------------------------------
 
                     ''')
-                helpText = 'preHelp + parser.print_help()'
+                # redirect stdout
+                stringio = StringIO()
+                previous_stdout = sys.stdout
+                sys.stdout = stringio
+
+                # trigger parser help
                 parser.print_help()
-                self.plainResponse.setText(sys.stdout)
+
+                # set back stdout
+                sys.stdout = previous_stdout
+                stdoutValue = stringio.getvalue()
+
+                # show output on the GUI
+                helpText = preHelp + stdoutValue
+                self.plainResponse.setText(helpText)
             # show specific command help
             elif result == 'help_command':
                 if type(data) == str:
@@ -180,7 +206,12 @@ class MainFrame(QWidget):
                 self.plainResponse.setText(data)
             # case result return that command is ready to execute
             elif result == 'cmd':
-                response = core_obj.request(data)
+                # append reminder args with the command
+                params_list = core_obj.parseParameters(reminderargs)
+                cmd = data
+                # add them to data which is the command list
+                cmd.update(params_list)
+                response = core_obj.request(cmd)
                 result = core_obj.getResponse(response)
                 self.plainResponse.setText(result)
             # case list of command
@@ -192,10 +223,10 @@ class MainFrame(QWidget):
                 self.plainResponse.setText(msg)
             # case unknown response or command
             else:
-                self.plainResponse.setText("Unknown results")
+                self.plainResponse.setText(data)
 
             # end the progress bar
-            self.progressBarSpeed(5)
+            # self.progressBarSpeed(5)
 
         except Exception as e:
             self.plainResponse.setText("Command failed due to: " + str(e))
@@ -204,7 +235,51 @@ class MainFrame(QWidget):
         self.plainResponse.setText('An error happend: ' + message + '\n')
 
     def updateCommandView(self):
-        self.commandText.setText(self.cmdTxt.text())
+        # this to check if a command is set
+        flag = False
+        cmdTxt = self.cmdTxt.text()
+        args = ''
+        # add command prefix
+        if ('-' or '--') not in cmdTxt:
+            args = '-c '
+            flag = True
+
+        args += self.cmdTxt.text()
+        args = args.split()
+
+        # clean extra spaces, leave only single spaces among commands
+        original_args = ' '.join(args)
+        # remove extra spaces around the = cases are ' =', '= ', ' = '
+        original_args = original_args.replace(" = ", "=")
+        original_args = original_args.replace(" =", "=")
+        original_args = original_args.replace("= ", "=")
+        # split args in an array
+        parameters = original_args.split()
+        # split commands if = used
+        params_len = len(parameters)
+        params = {}
+        try:
+            if params_len > 1:
+                i = 0
+                while i < params_len:
+                    if '=' in parameters[i]:
+                        key, value = parameters[i].split('=')
+                        params[key] = value
+                    else:
+                        key = parameters[i]
+                        i += 1
+                        value = parameters[i]
+                        params[key] = value
+                    i += 1
+                self.commandText.setText()
+        except Exception as e:
+            pass
+        if flag == False:
+            self.commandText.setText(cmdTxt)
+        else:
+            commandView = "\n".join(("{}={}".format(*i)
+                                     for i in params.items()))
+            self.commandText.setText(commandView)
 
     def createToolbar(self):
         self.toolbar = QToolBar("My main toolbar")
@@ -291,6 +366,11 @@ class MainFrame(QWidget):
         self.cmdTxt.setPlaceholderText("Enter command here...")
         self.cmdTxt.textEdited.connect(self.updateCommandView)
         self.cmdTxt.returnPressed.connect(self.executeCommand)
+        # set command completer
+        self.completer = QCompleter()
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.cmdTxt.setCompleter(self.completer)
+
         nameLabel = QLabel(self)
         nameLabel.setText('Command:')
 
@@ -322,11 +402,12 @@ class MainFrame(QWidget):
                                       QSizePolicy.Ignored)
 
         tab1 = QWidget()
-        tableWidget = QTableWidget(10, 10)
+        tableWidget = QTableWidget(2, 2)
 
-        tab1hbox = QHBoxLayout()
+        tab1hbox = QGridLayout()
         tab1hbox.setContentsMargins(5, 5, 5, 5)
-        tab1hbox.addWidget(tableWidget)
+        tab1hbox.addWidget(tableWidget, 0, 0)
+        tab1hbox.setColumnStretch(0, 1)
         tab1.setLayout(tab1hbox)
 
         tab2 = QWidget()
@@ -381,3 +462,13 @@ class MainFrame(QWidget):
 
         # start gui
         self.show()
+
+    def initialiseCommandCompleter(self):
+        model = QStringListModel()
+        # get all possible autocomplete strings
+        stringsSuggestion = []
+        stringsSuggestion = (self.coreLogic.getCommandList()).splitlines()
+        # set suggestion to the model
+        model.setStringList(stringsSuggestion)
+        # set model to the completer
+        self.completer.setModel(model)
