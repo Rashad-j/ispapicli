@@ -188,12 +188,15 @@ class Core:
         return response
 
     def getResponse(self, response, mode=''):
-        # return desired response, plain is default
-        code = response.getCode()
-        if code == 200:
-            # check mode = {hash, plain, list}
+        # check mode = {properties, plain, list}
+        if mode == 'properties':
+            return response.getListHash()
+        elif mode == 'list':
+            return response.getListHash()
+        elif mode == 'plain':
             return response.getPlain()
         else:
+            code = response.getCode()
             description = response.getDescription()
             message = "Server response: " + str(code) + " " + description
             return message
@@ -275,5 +278,23 @@ class Core:
             return_list += file_name + '\n'
         return return_list
 
-    def parseResponse(self, response):
-        pass
+    def getMinParameters(self, command_name):
+        command_name = command_name.lower()
+        path = self.command_path
+        returnData = []
+        files = os.listdir(path)
+        for file in files:
+            file_name, ext = file.split('.')
+            file_name_lower_case = file_name.lower()
+            if file_name_lower_case == command_name:
+                file_path = os.path.join(path, file)
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                    f.close()
+                    paramaters = data['paramaters']
+                    for row in paramaters:
+                        paramater = row['Parameter']
+                        minValue = row['Min']
+                        if minValue == '1' and paramater != 'COMMAND':
+                            returnData.append(paramater.lower())
+        return returnData

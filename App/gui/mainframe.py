@@ -7,9 +7,10 @@ from gui.login import LoginWindow
 import textwrap
 import sys
 from io import StringIO
+from collections import defaultdict
 
 
-class MainFrame(QWidget, QThread):
+class MainFrame(QWidget):
     def __init__(self, parent=None):
         super(MainFrame, self).__init__(parent)
 
@@ -47,9 +48,6 @@ class MainFrame(QWidget, QThread):
 
         # set focus on command input field
         self.cmdTxt.setFocus()
-
-        # commands list
-        self.commandList = {}
 
         # initilaize command line completer
         self.initialiseCommandCompleter()
@@ -127,7 +125,7 @@ class MainFrame(QWidget, QThread):
         self.progressBar = QProgressBar()
         self.progressBar.setRange(0, 100)
         self.progressBar.setValue(0)
-        self.progressBar.setMaximumHeight(10)
+        self.progressBar.setMaximumHeight(5)
         self.progressBar.setTextVisible(False)
 
         # create a timer for the progress bar
@@ -197,7 +195,7 @@ class MainFrame(QWidget, QThread):
                 if type(data) == str:
                     self.plainResponse.setText(data)
                 else:
-                    infoText = '\nCommand info: \n'
+                    infoText = 'Command info: \n'
                     infoText += data[0] + '\n'
                     infoText += data[1] + '\n'
                     self.plainResponse.setText(infoText)
@@ -212,8 +210,10 @@ class MainFrame(QWidget, QThread):
                 # add them to data which is the command list
                 cmd.update(params_list)
                 response = core_obj.request(cmd)
-                result = core_obj.getResponse(response)
-                self.plainResponse.setText(result)
+                # set reult values to gui
+                self.populateResults(response)
+
+            # self.tableResponse.inser(propertiesResult)
             # case list of command
             elif result == 'list':
                 self.plainResponse.setText(data)
@@ -225,9 +225,11 @@ class MainFrame(QWidget, QThread):
             else:
                 self.plainResponse.setText(data)
 
-            # end the progress bar
+            # 1 end the progress bar
             # self.progressBarSpeed(5)
-
+            # 2
+            # check user session, in case of sesssion is expired
+            self.checkLogin()
         except Exception as e:
             self.plainResponse.setText("Command failed due to: " + str(e))
 
@@ -235,48 +237,49 @@ class MainFrame(QWidget, QThread):
         self.plainResponse.setText('An error happend: ' + message + '\n')
 
     def updateCommandView(self):
-        # this to check if a command is set
-        flag = False
         cmdTxt = self.cmdTxt.text()
-        args = ''
-        # add command prefix
-        if ('-' or '--') not in cmdTxt:
-            args = '-c '
-            flag = True
-
-        args += self.cmdTxt.text()
-        args = args.split()
-
-        # clean extra spaces, leave only single spaces among commands
-        original_args = ' '.join(args)
-        # remove extra spaces around the = cases are ' =', '= ', ' = '
-        original_args = original_args.replace(" = ", "=")
-        original_args = original_args.replace(" =", "=")
-        original_args = original_args.replace("= ", "=")
-        # split args in an array
-        parameters = original_args.split()
-        # split commands if = used
-        params_len = len(parameters)
-        params = {}
-        try:
-            if params_len > 1:
-                i = 0
-                while i < params_len:
-                    if '=' in parameters[i]:
-                        key, value = parameters[i].split('=')
-                        params[key] = value
-                    else:
-                        key = parameters[i]
-                        i += 1
-                        value = parameters[i]
-                        params[key] = value
-                    i += 1
-                self.commandText.setText()
-        except Exception as e:
-            pass
-        if flag == False:
+        # check if the command is related to other actions
+        if cmdTxt.startswith('-', 0, 1) or cmdTxt.startswith('--', 0, 2):
             self.commandText.setText(cmdTxt)
+            return 0
         else:
+            args = '--command '
+            args += self.cmdTxt.text()
+            args = args.split()
+            # show min paramters suggestions
+            try:
+                minParams = self.coreLogic.getMinParameters(self.cmdTxt.text())
+                self.cmdTxt.setText(args[1] + ' ' + minParams[0] + '=')
+                print(minParams)
+            except:
+                pass
+            # clean extra spaces, leave only single spaces among commands
+            original_args = ' '.join(args)
+            # remove extra spaces around the = cases are ' =', '= ', ' = '
+            original_args = original_args.replace(" = ", "=")
+            original_args = original_args.replace(" =", "=")
+            original_args = original_args.replace("= ", "=")
+            # split args in an array
+            parameters = original_args.split()
+            # split commands if = used
+            params_len = len(parameters)
+            params = {}
+            try:
+                if params_len > 1:
+                    i = 0
+                    while i < params_len:
+                        if '=' in parameters[i]:
+                            key, value = parameters[i].split('=')
+                            params[key] = value
+                        else:
+                            key = parameters[i]
+                            i += 1
+                            value = parameters[i]
+                            params[key] = value
+                        i += 1
+                    self.commandText.setText()
+            except Exception as e:
+                pass
             commandView = "\n".join(("{}={}".format(*i)
                                      for i in params.items()))
             self.commandText.setText(commandView)
@@ -361,6 +364,7 @@ class MainFrame(QWidget, QThread):
         clearBtn.setIcon(QIcon("icons/cross.png"))
         clearBtn.setIconSize(QSize(14, 14))
         clearBtn.setLayoutDirection(Qt.RightToLeft)
+        clearBtn.clicked.connect(self.__clearCMDfield)
 
         self.cmdTxt = QLineEdit()
         self.cmdTxt.setPlaceholderText("Enter command here...")
@@ -402,30 +406,30 @@ class MainFrame(QWidget, QThread):
                                       QSizePolicy.Ignored)
 
         tab1 = QWidget()
-        tableWidget = QTableWidget(2, 2)
-
-        tab1hbox = QGridLayout()
+        self.plainResponse = QTextEdit()
+        tab1hbox = QHBoxLayout()
         tab1hbox.setContentsMargins(5, 5, 5, 5)
-        tab1hbox.addWidget(tableWidget, 0, 0)
-        tab1hbox.setColumnStretch(0, 1)
+        tab1hbox.addWidget(self.plainResponse)
         tab1.setLayout(tab1hbox)
 
         tab2 = QWidget()
-        self.plainResponse = QTextEdit()
+        self.tableResponse = QTableWidget(1, 2)
+        self.tableResponse.setHorizontalHeaderLabels(['Property', 'Value'])
+        self.tableResponse.horizontalHeader().setStretchLastSection(True)
+        tableLayout = QGridLayout()
+        tableLayout.setContentsMargins(5, 5, 5, 5)
+        tableLayout.addWidget(self.tableResponse, 0, 0)
+        tab2.setLayout(tableLayout)
 
-        self.plainResponse.setPlainText("Twinkle, twinkle, little star,\n"
-                                        "How I wonder what you are.\n"
-                                        "Up above the world so high,\n"
-                                        "Like a diamond in the sky.\n"
-                                        "Twinkle, twinkle, little star,\n"
-                                        "How I wonder what you are!\n")
+        tab3 = QWidget()
+        self.listResponse = QTextEdit()
+        tab3hbox = QHBoxLayout()
+        tab3hbox.addWidget(self.listResponse)
+        tab3.setLayout(tab3hbox)
 
-        tab2hbox = QHBoxLayout()
-        tab2hbox.setContentsMargins(5, 5, 5, 5)
-        tab2hbox.addWidget(self.plainResponse)
-        tab2.setLayout(tab2hbox)
-        middleTabWidget.addTab(tab2, "Plain")
-        middleTabWidget.addTab(tab1, "Table")
+        middleTabWidget.addTab(tab1, "Plain")
+        middleTabWidget.addTab(tab2, "Properties")
+        middleTabWidget.addTab(tab3, 'List')
 
         layout = QGridLayout()
         layout.addWidget(middleTabWidget, 0, 0, 1, 1)
@@ -472,3 +476,40 @@ class MainFrame(QWidget, QThread):
         model.setStringList(stringsSuggestion)
         # set model to the completer
         self.completer.setModel(model)
+
+    def __clearCMDfield(self):
+        self.cmdTxt.clear()
+        self.cmdTxt.setFocus(True)
+
+    def populateResults(self, response):
+        # get reulsts
+        plainResult = response.getPlain()
+        listResult = response.getListHash()
+
+        # set plain results
+        self.plainResponse.setText(plainResult)
+
+        # set properties and list
+        resultLists = listResult['LIST']
+        counter = 0
+        for row in resultLists:
+            for col in row:
+                counter += 1
+        # set the number of rows
+        self.tableResponse.setRowCount(counter)
+
+        # populate the table
+        rownumber = 0
+        for row in resultLists:
+            for i, (key, value) in enumerate(row.items()):
+                keyWidget = QTableWidgetItem(key)
+                valueWidget = QTableWidgetItem(value)
+                self.tableResponse.setItem(rownumber, 0, keyWidget)
+                self.tableResponse.setItem(rownumber, 1, valueWidget)
+                # update the list
+                if key not in ('TOTAL', 'FIRST', 'LAST', 'LIMIT', 'COUNT'):
+                    self.listResponse.append(value)
+                # incerate rownumber
+                rownumber += 1
+        # order table content
+        self.tableResponse.sortItems(Qt.AscendingOrder)

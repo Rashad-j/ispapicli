@@ -74,7 +74,7 @@ def main(args):
             # add them to data which is the command list
             cmd.update(params_list)
             response = core_obj.request(cmd)
-            result = core_obj.getResponse(response)
+            result = response.getPlain()
             print(result)
 
         # list of commands
@@ -116,5 +116,4 @@ if __name__ == "__main__":
     if argsLen == 1:  # only in debugging mode
         startGUI()
     else:
-        print(sys.argv)
         main(sys.argv[1:])
