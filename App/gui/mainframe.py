@@ -3,11 +3,14 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from modules.core import Core
+from modules.scrap import Scrap
 from gui.login import LoginWindow
 import textwrap
 import sys
 from io import StringIO
 from collections import defaultdict
+import re
+import subprocess
 
 
 class MainFrame(QWidget):
@@ -51,6 +54,10 @@ class MainFrame(QWidget):
 
         # initilaize command line completer
         self.initialiseCommandCompleter()
+
+        # command to execute 
+        self.commandToExecute = ''
+
 
     def checkLogin(self):
         result = self.coreLogic.checkSession()
@@ -147,7 +154,7 @@ class MainFrame(QWidget):
         self.progressBarSpeed(5)
 
         # get args from the GUI
-        splitted_args = (self.commandText.toPlainText()).split()
+        splitted_args = (self.commandToExecute).split()
 
         # intialize the parser
         core_obj = self.coreLogic
@@ -209,14 +216,22 @@ class MainFrame(QWidget):
                 cmd = data
                 # add them to data which is the command list
                 cmd.update(params_list)
-                response = core_obj.request(cmd)
+                self.response = core_obj.request(cmd)
                 # set reult values to gui
-                self.populateResults(response)
+                self.populateResults(self.response)
 
             # self.tableResponse.inser(propertiesResult)
             # case list of command
             elif result == 'list':
-                self.plainResponse.setText(data)
+                # create scrap object 
+                scrap = Scrap()
+                # scrap commands
+                process = subprocess.Popen(scrap.scrapCommands(), stdout=subprocess.PIPE)
+                for line in process.stdout:
+                    #sys.stdout.write(line)
+                    self.listResponse.append(line)
+                # show output on the GUI
+                self.plainResponse.setText(stdoutValue)
             # case logout
             elif result == 'logout':
                 status, msg = data
@@ -239,19 +254,22 @@ class MainFrame(QWidget):
     def updateCommandView(self):
         cmdTxt = self.cmdTxt.text()
         # check if the command is related to other actions
-        if cmdTxt.startswith('-', 0, 1) or cmdTxt.startswith('--', 0, 2):
+        if cmdTxt.startswith('-', 0, 1):
             self.commandText.setText(cmdTxt)
+            self.commandToExecute = cmdTxt
             return 0
         else:
-            args = '--command '
-            args += self.cmdTxt.text()
+            args = 'command '
+            args += cmdTxt
             args = args.split()
             # show min paramters suggestions
             try:
-                minParams = self.coreLogic.getMinParameters(self.cmdTxt.text())
-                self.cmdTxt.setText(args[1] + ' ' + minParams[0] + '=')
-                print(minParams)
-            except:
+                cmd = cmdTxt
+                m = re.match('^(\w+)\s$', cmd)
+                if m:
+                    minParams = self.coreLogic.getMinParameters(cmd.strip())
+                    self.cmdTxt.setText(args[1] + ' ' + minParams[0] + '=')
+            except Exception as e:
                 pass
             # clean extra spaces, leave only single spaces among commands
             original_args = ' '.join(args)
@@ -283,13 +301,14 @@ class MainFrame(QWidget):
             commandView = "\n".join(("{}={}".format(*i)
                                      for i in params.items()))
             self.commandText.setText(commandView)
+            self.commandToExecute = '--' + commandView
 
     def createToolbar(self):
         self.toolbar = QToolBar("My main toolbar")
         self.toolbar.setIconSize(QSize(20, 20))
         saveAction = QAction(
-            QIcon("icons/save.png"), "Save results to JSON file", self)
-        saveAction.triggered.connect(self.onMyToolBarButtonClick)
+            QIcon("icons/save.png"), "Save results to a file", self)
+        saveAction.triggered.connect(lambda: self.saveCommandToFile())
 
         copyAction = QAction(
             QIcon("icons/copy.png"), "Copy the results to clipboard", self)
@@ -301,7 +320,6 @@ class MainFrame(QWidget):
 
         openAction = QAction(
             QIcon("icons/new.png"), "Open another window", self)
-        openAction.triggered.connect(self.onMyToolBarButtonClick)
 
         self.sessionTime = QLabel("Checking your session... ")
         spacer = QWidget()
@@ -513,3 +531,32 @@ class MainFrame(QWidget):
                 rownumber += 1
         # order table content
         self.tableResponse.sortItems(Qt.AscendingOrder)
+
+    def saveCommandToFile(self):
+        try:
+            result = self.plainResponse.toPlainText()
+            command = self.response.getCommandPlain()
+            textToWrite = command + '\n' + result
+            options = QFileDialog.Options()
+            # options |= QFileDialog.DontUseNativeDialog # Qt's builtin File Dialogue
+            fileName, _ = QFileDialog.getSaveFileName(self, "Open", "report.txt", "All Files (*.*)", options=options)
+            if fileName:
+                try:
+                    with open(fileName, 'w') as file:
+                        file.write(textToWrite)
+                    alert = QMessageBox()
+                    alert.setText("'" + fileName + "' \n\nFile Saved Successfully!")
+                    alert.setIcon(QMessageBox.Information)
+                    alert.exec_()
+                except Exception as e: 
+                    alert = QMessageBox()
+                    alert.setIcon(QMessageBox.Critical)
+                    alert.setText("Couldn't save the file due to: " + str(e))
+                    alert.exec_()
+        except Exception as e:
+            alert = QMessageBox()
+            alert.setIcon(QMessageBox.Critical)
+            alert.setText("Request a command first!")
+            alert.setWindowTitle("Error")
+            alert.exec_()
+        

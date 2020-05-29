@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 class Scrap:
-    def __init__(self, URL):
+    def __init__(self, URL=''):
         self.mainURL = URL
 
     # recursive function
@@ -14,7 +14,7 @@ class Scrap:
         Allurls = []
         # parse url
         for url in urls:
-            if(self.checkUrlType(url) == 'file'):
+            if (self.checkUrlType(url) == 'file'):
                 Allurls.append(url)
                 print('url found: ' + url)
                 # create the command here
@@ -52,8 +52,8 @@ class Scrap:
             # return urls
             return urls
         else:
-            raise Exception(
-                "Page couldn't loaded. Status code: " + str(statusCode))
+            raise Exception("Page couldn't loaded. Status code: " +
+                            str(statusCode))
 
     def checkUrlType(self, url):
         if url.endswith('.md'):
@@ -91,6 +91,7 @@ class Scrap:
             return desc[0].text
         except:
             return ' '
+
     # get comman avaiablity
 
     def getCommandAvailability(self, article):
@@ -136,7 +137,7 @@ class Scrap:
 
     def dumpCommandToFile(self, commandName, data):
         # if command file does not exist, create it and dump
-        p = Path('../commands/'+commandName+'.json')
+        p = Path('../commands/' + commandName + '.json')
         with p.open('w') as outfile:
             json.dump(data, outfile)
             outfile.close
@@ -150,21 +151,21 @@ class Scrap:
         data['paramaters'] = self.getCommandParameters(table)
         return data
 
-
-if __name__ == "__main__":
-    gitHubURL = 'https://github.com/hexonet/hexonet-api-documentation/tree/master/API'
-    try:
-        scrap = Scrap(gitHubURL)
-        urls = scrap.getURLs([gitHubURL])
-        for url in urls:
-            try:
-                article, table = scrap.getParsedPage(url)
-                commandName = scrap.getCommandName(article)
-                data = scrap.getCommandData(article, table)
-                scrap.dumpCommandToFile(commandName, data)
-            except Exception as e:
-                print("Couldn't extract command because documentation differs in URL: " +
-                      url+" \nReason: " + str(e))
-        print('\n Commands created successfully!')
-    except Exception as e:
-        print("Process stopped due to: " + str(e))
+    def scrapCommands(self):
+        gitHubURL = 'https://github.com/hexonet/hexonet-api-documentation/tree/master/API'
+        try:
+            scrap = Scrap(gitHubURL)
+            urls = scrap.getURLs([gitHubURL])
+            for url in urls:
+                try:
+                    article, table = scrap.getParsedPage(url)
+                    commandName = scrap.getCommandName(article)
+                    data = scrap.getCommandData(article, table)
+                    scrap.dumpCommandToFile(commandName, data)
+                except Exception as e:
+                    print(
+                        "Couldn't extract command because documentation differs in URL: "
+                        + url + " \nReason: " + str(e))
+            print('\n Commands created successfully!')
+        except Exception as e:
+            print("Process stopped due to: " + str(e))
