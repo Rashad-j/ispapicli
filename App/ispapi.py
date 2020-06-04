@@ -6,6 +6,7 @@ import argparse
 from hexonet.apiconnector.response import Response
 from pathlib import Path
 from modules.core import Core
+from modules.scrap import Scrap
 from gui.mainframe import MainFrame
 import textwrap
 from PyQt5.QtWidgets import QApplication
@@ -44,7 +45,8 @@ def main(args):
         # case show help requested
         elif result == 'help':
             print('\n')
-            print(textwrap.dedent('''\
+            print(
+                textwrap.dedent('''\
                 ISPAPI - Commandline Tool
                 ------------------------------------------------------------
                 The tool can be used in two modes:
@@ -87,6 +89,10 @@ def main(args):
         elif result == 'logout':
             status, msg = data
             print(msg)
+
+        elif result == 'update':
+            scraper = Scrap()
+            scraper.scrapCommands()
 
         # case user entered unknow command
         else:

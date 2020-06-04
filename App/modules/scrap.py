@@ -2,11 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from pathlib import Path
+import os
 
 
 class Scrap:
     def __init__(self, URL=''):
         self.mainURL = URL
+        self.command_path = Path(__file__).parent / "../commands/"
 
     # recursive function
     def getURLs(self, urls):
@@ -137,10 +139,17 @@ class Scrap:
 
     def dumpCommandToFile(self, commandName, data):
         # if command file does not exist, create it and dump
-        p = Path('../commands/' + commandName + '.json')
-        with p.open('w') as outfile:
-            json.dump(data, outfile)
-            outfile.close
+        # p = Path('../commands/' + commandName + '.json')
+        # p = Path(__file__).parent / "../commands/" + commandName + '.json'
+        # print(os.path.abspath(os.path.join('commands/', os.pardir)))
+        # print(os.path.abspath('..'))
+        absolute_dirpath = os.path.abspath(os.path.dirname(__file__))
+        p = os.path.join(absolute_dirpath,
+                         '../commands/' + commandName + '.json')
+        print(p)
+        f = open(p, "w")
+        json.dump(data, f)
+        f.close()
         print('Command file created: ', p)
 
     def getCommandData(self, article, table):
@@ -166,6 +175,6 @@ class Scrap:
                     print(
                         "Couldn't extract command because documentation differs in URL: "
                         + url + " \nReason: " + str(e))
-            print('\n Commands created successfully!')
+            print('\nCommand finished.')
         except Exception as e:
             print("Process stopped due to: " + str(e))

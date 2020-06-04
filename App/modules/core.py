@@ -32,37 +32,74 @@ class Core:
                 - Or visit our documentation on: https://github.com/hexonet/hexonet-api-documentation
                 ------------------------------------------------------------
             ''')
-        parser.add_argument('args', nargs=argparse.REMAINDER,
+        parser.add_argument('args',
+                            nargs=argparse.REMAINDER,
                             help='All additional args, e.g. limit=5')
-        parser.add_argument('--command', '-c', metavar='<command>',
-                            help='Enter a command e.g. -c=CheckDomain or -c CheckDomain')
-        parser.add_argument('--userid', '-u', metavar='<user id>',
+        parser.add_argument(
+            '--command',
+            '-c',
+            metavar='<command>',
+            help='Enter a command e.g. -c=CheckDomain or -c CheckDomain')
+        parser.add_argument('--userid',
+                            '-u',
+                            metavar='<user id>',
                             help='Your login user ID')
-        parser.add_argument('--password', '-p', metavar='<your password>',
+        parser.add_argument('--password',
+                            '-p',
+                            metavar='<your password>',
                             help="Your login password")
-        parser.add_argument('--entity', '-e', choices={'live', 'ote'},
-                            help="Set entity to either live or ote system e.g. -e=ote")
-        parser.add_argument('--gui', '-g', const='gui', nargs='?', metavar='<>',
+        parser.add_argument(
+            '--entity',
+            '-e',
+            choices={'live', 'ote'},
+            help="Set entity to either live or ote system e.g. -e=ote")
+        parser.add_argument('--gui',
+                            '-g',
+                            const='gui',
+                            nargs='?',
+                            metavar='<>',
                             help="Start graphical application")
-        parser.add_argument('--help', '-h', const='all', nargs='?', metavar='<command>,<>',
-                            help="Show detailed use of a 'command' OR use --help to show help")
-        parser.add_argument('--list', '-li', const='list', nargs='?', metavar='<>',
+        parser.add_argument(
+            '--help',
+            '-h',
+            const='all',
+            nargs='?',
+            metavar='<command>,<>',
+            help="Show detailed use of a 'command' OR use --help to show help")
+        parser.add_argument('--list',
+                            '-li',
+                            const='list',
+                            nargs='?',
+                            metavar='<>',
                             help="List all commands' names")
-        parser.add_argument('--logout', '-l', const='logout', nargs='?', metavar='<>',
+        parser.add_argument('--logout',
+                            '-l',
+                            const='logout',
+                            nargs='?',
+                            metavar='<>',
                             help="Destroy your current session")
-        parser.add_argument('--update', '-up', const='update', nargs='?', metavar='<>',
+        parser.add_argument('--update',
+                            '-up',
+                            const='update',
+                            nargs='?',
+                            metavar='<>',
                             help="Update local command list")
-        parser.add_argument('--version', '-v', action='version',
+        parser.add_argument('--version',
+                            '-v',
+                            action='version',
                             version='%(prog)s 2.0')
 
         return parser
 
     def parseArgs(self, args):
+        # case logout
         if args['logout'] is not None:
             result, msg = self.logout()
             return 'logout', {result, msg}
+        # case gui
         if args['gui'] is not None:
             return 'gui', {}
+        # case help
         if args['help'] is not None:
             if args['help'] == 'all':
                 return 'help', {}
@@ -70,9 +107,14 @@ class Core:
                 command_help = args['help']
                 help_info = self.getCommandHelp(command_help)
                 return 'help_command', help_info
+        # case list of all commands
         if args['list'] is not None:
             commands_list = self.getCommandList()
             return 'list', commands_list
+        # case update commands triggered
+        if args['update']:
+            return 'update', {}
+        # otherwise it is a command requested
         # if logged in, and there is a session, then check for the command and the args
         session_status = self.checkSession(args)
         if session_status == 'valid':
@@ -81,7 +123,8 @@ class Core:
                 cmd_struct['command'] = args['command']
                 return 'cmd', cmd_struct
             # case user trying to log in while his session is valid
-            elif None not in (args['userid'], args['password'], args['entity']):
+            elif None not in (args['userid'], args['password'],
+                              args['entity']):
                 msg = 'You are already logged in, your session is valid.'
                 return 'msg', msg
             else:
@@ -231,8 +274,9 @@ class Core:
                                 row_data.append(row[key])
                         table.append(row_data)
 
-                    paramaters_table = tabulate(
-                        table, headers, tablefmt="fancy_grid")
+                    paramaters_table = tabulate(table,
+                                                headers,
+                                                tablefmt="fancy_grid")
                     return basic_info, paramaters_table
         else:
             return f"Command '{command_name}' not found!"

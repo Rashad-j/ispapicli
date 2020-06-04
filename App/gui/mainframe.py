@@ -223,6 +223,9 @@ class MainFrame(QWidget):
             # self.tableResponse.inser(propertiesResult)
             # case list of command
             elif result == 'list':
+                self.plainResponse.setText(data)
+            # case update commands
+            elif result == 'update':
                 # create scrap object 
                 scrap = Scrap()
                 # scrap commands
@@ -231,7 +234,7 @@ class MainFrame(QWidget):
                     #sys.stdout.write(line)
                     self.listResponse.append(line)
                 # show output on the GUI
-                self.plainResponse.setText(stdoutValue)
+                # self.plainResponse.setText(stdoutValue)
             # case logout
             elif result == 'logout':
                 status, msg = data
@@ -268,7 +271,12 @@ class MainFrame(QWidget):
                 m = re.match('^(\w+)\s$', cmd)
                 if m:
                     minParams = self.coreLogic.getMinParameters(cmd.strip())
-                    self.cmdTxt.setText(args[1] + ' ' + minParams[0] + '=')
+                    minParamsLabel = ', '.join(minParams)
+                    minParamsInput = '= '.join(minParams)
+                    cursorPosition = len(self.cmdTxt.text() + minParams[0]) + 1 # for the '=' char
+                    self.cmdTxt.setText(args[1] + ' ' + minParamsInput +'=')
+                    self.minParameter.setText('Min parameters: ' + minParamsLabel)
+                    self.cmdTxt.setCursorPosition(cursorPosition)
             except Exception as e:
                 pass
             # clean extra spaces, leave only single spaces among commands
@@ -312,7 +320,7 @@ class MainFrame(QWidget):
 
         copyAction = QAction(
             QIcon("icons/copy.png"), "Copy the results to clipboard", self)
-        copyAction.triggered.connect(self.onMyToolBarButtonClick)
+        copyAction.triggered.connect(self.copyToClipboard)
 
         helpAction = QAction(
             QIcon("icons/help.png"), "See help documentation", self)
@@ -388,19 +396,23 @@ class MainFrame(QWidget):
         self.cmdTxt.setPlaceholderText("Enter command here...")
         self.cmdTxt.textEdited.connect(self.updateCommandView)
         self.cmdTxt.returnPressed.connect(self.executeCommand)
+        
         # set command completer
         self.completer = QCompleter()
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.cmdTxt.setCompleter(self.completer)
 
-        nameLabel = QLabel(self)
-        nameLabel.setText('Command:')
+        self.minParameter = QLabel(self)
+        self.minParameter.setText('Min parameters: ')
+        self.minParameter.setStyleSheet("color:gray")
+        f = QFont("Arial", 9);                            
+        self.minParameter.setFont(f)
 
         gridLayout = QGridLayout()
-        #gridLayout.addWidget(nameLabel,  0, 0, 1, 1)
-        gridLayout.addWidget(self.cmdTxt,     0, 1, 1, 1)
+        gridLayout.addWidget(self.cmdTxt,0, 1, 1, 1)
         gridLayout.addWidget(executeBtn, 0, 2, 1, 1)
         gridLayout.addWidget(clearBtn,   0, 3, 1, 1)
+        gridLayout.addWidget(self.minParameter,  1, 1, 1, 1)
         gridLayout.setContentsMargins(5, 0, 5, 10)
         self.topLayout = gridLayout
         self.topBox.setLayout(gridLayout)
@@ -504,6 +516,9 @@ class MainFrame(QWidget):
         plainResult = response.getPlain()
         listResult = response.getListHash()
 
+        # delete any previous content of the list
+        self.listResponse.setText('')
+
         # set plain results
         self.plainResponse.setText(plainResult)
 
@@ -534,9 +549,7 @@ class MainFrame(QWidget):
 
     def saveCommandToFile(self):
         try:
-            result = self.plainResponse.toPlainText()
-            command = self.response.getCommandPlain()
-            textToWrite = command + '\n' + result
+            textToWrite = self.commandAndResponsePlain()
             options = QFileDialog.Options()
             # options |= QFileDialog.DontUseNativeDialog # Qt's builtin File Dialogue
             fileName, _ = QFileDialog.getSaveFileName(self, "Open", "report.txt", "All Files (*.*)", options=options)
@@ -559,4 +572,18 @@ class MainFrame(QWidget):
             alert.setText("Request a command first!")
             alert.setWindowTitle("Error")
             alert.exec_()
-        
+    
+    def commandAndResponsePlain(self):
+        result = self.plainResponse.toPlainText()
+        command = self.response.getCommandPlain()
+        textToWrite = command + '\n' + result
+        return textToWrite
+
+    def copyToClipboard(self):
+        try:
+            newText = self.commandAndResponsePlain()
+            clipboard = QApplication.clipboard()
+            clipboard.setText(newText)
+        except Exception as e: 
+            print(e)
+            pass # in the case where there is not command requested
