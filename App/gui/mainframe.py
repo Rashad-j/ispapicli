@@ -254,7 +254,7 @@ class MainFrame(QWidget):
     def errorFunction(self, message):
         self.plainResponse.setText('An error happend: ' + message + '\n')
 
-    def updateCommandView(self):
+    def updateCommandView(self, e):
         cmdTxt = self.cmdTxt.text()
         # check if the command is related to other actions
         if cmdTxt.startswith('-', 0, 1):
@@ -324,7 +324,7 @@ class MainFrame(QWidget):
 
         helpAction = QAction(
             QIcon("icons/help.png"), "See help documentation", self)
-        helpAction.triggered.connect(self.onMyToolBarButtonClick)
+        helpAction.triggered.connect(self.showHelp)
 
         openAction = QAction(
             QIcon("icons/new.png"), "Open another window", self)
@@ -373,10 +373,11 @@ class MainFrame(QWidget):
         edit.addAction(copy)
 
         help = self.menuBar.addMenu("Help")
-        help.addAction("How to?")
         help.addAction("About ISPAPI tool")
 
-        file.triggered[QAction].connect(self.processTrigger)
+        file.triggered[QAction].connect(self.menuBarActions)
+        edit.triggered[QAction].connect(self.menuBarActions)
+        help.triggered[QAction].connect(self.menuBarActions)
 
     def createTopGroupBox(self):
         self.topBox = QGroupBox((""))
@@ -395,6 +396,8 @@ class MainFrame(QWidget):
         self.cmdTxt = QLineEdit()
         self.cmdTxt.setPlaceholderText("Enter command here...")
         self.cmdTxt.textEdited.connect(self.updateCommandView)
+        # qSpaceEvent = QKeyEvent(QEvent.KeyPress, Qt.Key_Space, Qt.KeypadModifier)
+        # self.cmdTxt.keyPressEvent(qSpaceEvent)
         self.cmdTxt.returnPressed.connect(self.executeCommand)
         
         # set command completer
@@ -473,12 +476,30 @@ class MainFrame(QWidget):
         loginGui = LoginWindow(self)
         loginGui.startGui()
 
-    def processTrigger(self, q):
-        print(q.text()+" is triggered")
+    def menuBarActions(self, q):
+        action = q.text()
+        if action == 'New Window':
+            pass
+        if action == 'Save to file':
+            self.saveCommandToFile()
+        if action == 'Quit':
+            self.closeApplication()
+        if action == 'Copy':
+            self.copyToClipboard()
+        if action == 'Help':
+            self.showHelp()
+        if action == 'About ISPAPI tool':
+            self.showAbout()
 
     def closeApplication(self):
         print("exiting")
         sys.exit()
+
+    def startNewWindow(self):
+        app = QApplication(sys.argv)
+        appGui = MainFrame()
+        appGui.startGui()
+        sys.exit(app.exec_())
 
     def startGui(self):
         geo = QDesktopWidget().availableGeometry()
@@ -587,3 +608,37 @@ class MainFrame(QWidget):
         except Exception as e: 
             print(e)
             pass # in the case where there is not command requested
+    
+    def showHelp(self):
+        print('help')
+
+    def showAbout(self):
+        
+        box = QMessageBox(self)
+        msg = """<p align='center'>
+        <b>ISPAPI Tool</b>. <br><br><br>
+        Version: 2.0.1 <br><br>
+        A simple command line interface to connect you to your account on Hexonet
+        <br><br>
+        Technical Support:
+        <br>
+        Email: <b>Sameer Bhatt</b> (for giving me the implementation example)
+        Website: 
+        <br><br><br>
+        Copyright 2020 Hexonet
+        <br><br>
+        </p>
+        """
+        box.setStandardButtons(QMessageBox.Ok)
+        box.setIcon(QMessageBox.Information)
+        box.setWindowTitle("About")
+        box.setText(msg)
+        box.show()
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_Space:
+            print('space')
+        else:
+            print('no space')   
+        
