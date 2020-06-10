@@ -265,20 +265,6 @@ class MainFrame(QWidget):
             args = 'command '
             args += cmdTxt
             args = args.split()
-            # show min paramters suggestions
-            try:
-                cmd = cmdTxt
-                m = re.match('^(\w+)\s$', cmd)
-                if m:
-                    minParams = self.coreLogic.getMinParameters(cmd.strip())
-                    minParamsLabel = ', '.join(minParams)
-                    minParamsInput = '= '.join(minParams)
-                    cursorPosition = len(self.cmdTxt.text() + minParams[0]) + 1 # for the '=' char
-                    self.cmdTxt.setText(args[1] + ' ' + minParamsInput +'=')
-                    self.minParameter.setText('Min parameters: ' + minParamsLabel)
-                    self.cmdTxt.setCursorPosition(cursorPosition)
-            except Exception as e:
-                pass
             # clean extra spaces, leave only single spaces among commands
             original_args = ' '.join(args)
             # remove extra spaces around the = cases are ' =', '= ', ' = '
@@ -398,8 +384,9 @@ class MainFrame(QWidget):
         self.cmdTxt = QLineEdit()
         self.cmdTxt.setPlaceholderText("Enter command here...")
         self.cmdTxt.textEdited.connect(self.updateCommandView)
-        # qSpaceEvent = QKeyEvent(QEvent.KeyPress, Qt.Key_Space, Qt.KeypadModifier)
-        # self.cmdTxt.keyPressEvent(qSpaceEvent)
+        #qSpaceEvent = QKeyEvent(QEvent.KeyPress, Qt.Key_Backspace, Qt.NoModifier)
+        #self.cmdTxt.keyPressEvent(qSpaceEvent)
+        self.cmdTxt.installEventFilter(self)
         self.cmdTxt.returnPressed.connect(self.executeCommand)
         
         # set command completer
@@ -638,10 +625,23 @@ class MainFrame(QWidget):
         box.setText(msg)
         box.show()
 
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Space:
-            print('space')
-        else:
-            print('no space')   
-        
+    def eventFilter(self, source, event):
+        # this function to handle autocomplete for command line
+        if (event.type() == QEvent.KeyRelease and source is self.cmdTxt):
+                if event.key() == Qt.Key_Space:
+                    # show min paramters suggestions
+                    try:
+                        cmd = self.cmdTxt.text()
+                        m = re.match('^(\w+)\s$', cmd)
+                        if m:
+                            minParams = self.coreLogic.getMinParameters(cmd.strip())
+                            minParamsLabel = ', '.join(minParams)
+                            minParamsInput = '= '.join(minParams)
+                            cursorPosition = len(self.cmdTxt.text() + minParams[0]) + 1 # for the '=' char
+                            self.cmdTxt.setText(cmd + minParamsInput +'=')
+                            self.minParameter.setText('Min parameters: ' + minParamsLabel)
+                            self.cmdTxt.setCursorPosition(cursorPosition)
+                    except Exception as e:
+                        print(e)
+        # must return bool value
+        return super(MainFrame, self).eventFilter(source, event)
