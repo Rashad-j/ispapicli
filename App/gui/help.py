@@ -1,7 +1,6 @@
+from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView, QWebEnginePage as QWebPage
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings as QWebSettings
 
-import sys
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWebEngineWidgets import *
 
 class Render(QWebEngineView):
     def __init__(self, html):
@@ -19,4 +18,3 @@ class Render(QWebEngineView):
 
     def callable(self, data):
         self.html = data
-

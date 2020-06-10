@@ -342,7 +342,8 @@ class MainFrame(QWidget):
 
         seperator = QAction(self)
         seperator.setSeparator(True)
-        self.toolbar.addAction(openAction)
+        # create a new window -TODO
+        #self.toolbar.addAction(openAction)
         self.toolbar.addAction(saveAction)
         self.toolbar.addAction(copyAction)
         self.toolbar.addAction(seperator)
@@ -362,7 +363,8 @@ class MainFrame(QWidget):
         quit = QAction("Quit", self)
         quit.setShortcut("Ctrl+q")
 
-        file.addAction(new)
+        # create a new window - TODO
+        #file.addAction(new)
         file.addAction(save)
         file.addAction(quit)
 
@@ -616,21 +618,22 @@ class MainFrame(QWidget):
         
         box = QMessageBox(self)
         msg = """<p align='center'>
-        <b>ISPAPI Tool</b>. <br><br><br>
+        <b style='font-size:20px'>ISPAPI Tool</b>. <br><br><br>
         Version: 2.0.1 <br><br>
         A simple command line interface to connect you to your account on Hexonet
         <br><br>
         Technical Support:
         <br>
-        Email: <b>Sameer Bhatt</b> (for giving me the implementation example)
-        Website: 
+        Email: support@hexonet.net 
+        <br>
+        Website: https://www.hexonet.net/
         <br><br><br>
-        Copyright 2020 Hexonet
+        Copyright 2020 @Hexonet
         <br><br>
         </p>
         """
         box.setStandardButtons(QMessageBox.Ok)
-        box.setIcon(QMessageBox.Information)
+        #box.setIcon(QMessageBox.Information)
         box.setWindowTitle("About")
         box.setText(msg)
         box.show()
