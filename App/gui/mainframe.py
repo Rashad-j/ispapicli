@@ -58,6 +58,9 @@ class MainFrame(QWidget):
         # command to execute 
         self.commandToExecute = ''
 
+        # set app icon
+        self.setWindowIcon(QIcon("icons/logo-bgw.jpg"))
+        
 
     def checkLogin(self):
         result = self.coreLogic.checkSession()

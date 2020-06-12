@@ -8,7 +8,7 @@ import os
 class Scrap:
     def __init__(self, URL=''):
         self.mainURL = URL
-        self.command_path = Path(__file__).parent / "../commands/"
+        self.absolute_dirpath = os.path.abspath(os.path.dirname(__file__))
 
     # recursive function
     def getURLs(self, urls):
@@ -138,15 +138,9 @@ class Scrap:
         return data
 
     def dumpCommandToFile(self, commandName, data):
-        # if command file does not exist, create it and dump
-        # p = Path('../commands/' + commandName + '.json')
-        # p = Path(__file__).parent / "../commands/" + commandName + '.json'
-        # print(os.path.abspath(os.path.join('commands/', os.pardir)))
-        # print(os.path.abspath('..'))
-        absolute_dirpath = os.path.abspath(os.path.dirname(__file__))
-        p = os.path.join(absolute_dirpath,
+        p = os.path.join(self.absolute_dirpath,
                          '../commands/' + commandName + '.json')
-        print(p)
+
         f = open(p, "w")
         json.dump(data, f)
         f.close()

@@ -17,8 +17,12 @@ class Core:
     def __init__(self):
         # create private config list
         self.cl = AC()
-        self.command_path = Path(__file__).parent / "../commands/"
-        self.session_path = Path(__file__).parent / "../config/session.json"
+        # cross OS path reader
+        self.absolute_dirpath = os.path.abspath(os.path.dirname(__file__))
+        self.command_path = Path(
+            os.path.join(self.absolute_dirpath, '../commands/'))
+        self.session_path = Path(
+            os.path.join(self.absolute_dirpath, '../config/session.json'))
 
     def initParser(self, args=None):
         parser = argparse.ArgumentParser(add_help=False)
