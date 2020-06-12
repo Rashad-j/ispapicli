@@ -3,12 +3,25 @@ from bs4 import BeautifulSoup
 import json
 from pathlib import Path
 import os
+import sys
 
 
 class Scrap:
     def __init__(self, URL=''):
         self.mainURL = URL
-        self.absolute_dirpath = os.path.dirname(__file__)
+
+        # init app directories
+        self.initAppDirectories()
+
+    def initAppDirectories(self):
+        if getattr(sys, 'frozen', False):
+            self.absolute_dirpath = os.path.dirname(sys.executable)
+        elif __file__:
+            self.absolute_dirpath = os.path.dirname(__file__)
+
+        self.command_path = os.path.join(self.absolute_dirpath, '../commands/')
+        self.session_path = os.path.join(self.absolute_dirpath,
+                                         '../config/session.json')
 
     # recursive function
     def getURLs(self, urls):

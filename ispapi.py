@@ -23,7 +23,6 @@ def main(args):
 
     # clean extra spaces, leave only single spaces among commands
     original_args = ' '.join(args)
-    print(original_args)
     # remove extra spaces around the = cases are ' =', '= ', ' = '
     original_args = original_args.replace(" = ", "=")
     original_args = original_args.replace(" =", "=")
