@@ -8,7 +8,7 @@ import os
 class Scrap:
     def __init__(self, URL=''):
         self.mainURL = URL
-        self.absolute_dirpath = os.path.abspath(os.path.dirname(__file__))
+        self.absolute_dirpath = os.path.dirname(__file__)
 
     # recursive function
     def getURLs(self, urls):

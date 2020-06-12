@@ -18,11 +18,10 @@ class Core:
         # create private config list
         self.cl = AC()
         # cross OS path reader
-        self.absolute_dirpath = os.path.abspath(os.path.dirname(__file__))
-        self.command_path = Path(
-            os.path.join(self.absolute_dirpath, '../commands/'))
-        self.session_path = Path(
-            os.path.join(self.absolute_dirpath, '../config/session.json'))
+        self.absolute_dirpath = os.path.dirname(__file__)
+        self.command_path = os.path.join(self.absolute_dirpath, '../commands/')
+        self.session_path = os.path.join(self.absolute_dirpath,
+                                         '../config/session.json')
 
     def initParser(self, args=None):
         parser = argparse.ArgumentParser(add_help=False)
@@ -175,10 +174,11 @@ class Core:
     def checkSession(self, args=''):
         data = {}
         # check if there is a session already exist
+        p = self.session_path
         try:
-            with self.session_path.open('r') as f:
-                data = json.load(f)
-                f.close()
+            f = open(p, 'r')
+            data = json.load(f)
+            f.close()
             entity = data['entity']
             time_format = "%Y-%m-%d %H:%M:%S"
             t_now = datetime.now().strftime(time_format)
@@ -198,11 +198,12 @@ class Core:
             return 'init'
 
     def logout(self):
+        p = self.session_path
         try:
             msg = ''
-            with self.session_path.open('r') as f:
-                data = json.load(f)
-                f.close()
+            f = open(p, 'r')
+            data = json.load(f)
+            f.close()
             entity = data['entity']
             if entity == 'ote':
                 self.cl.useOTESystem()
@@ -215,7 +216,7 @@ class Core:
                 flag = False
 
             # delete local session
-            path = Path(__file__).parent / "../config/session.json"
+            path = self.session_path
             if os.path.exists(path):
                 os.remove(path)  # delete local session
                 if flag:
@@ -258,30 +259,30 @@ class Core:
             file_name_lower_case = file_name.lower()
             if file_name_lower_case == command_name:
                 file_path = os.path.join(path, file)
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                    f.close()
-                    command = data['command']
-                    description = data['description']
-                    availability = data['availability']
-                    paramaters = data['paramaters']
-                    basic_info = f'Command: {command} \nDescription: {description} \nAvailability: {availability}\nParameters:'
-                    headers = ['Parameter', 'Min', 'Definition', 'Type']
-                    table = []
-                    t = TextWrapper(width=30)
-                    for row in paramaters:
-                        row_data = []
-                        for key in row:
-                            if key == 'Definition':
-                                row_data.append(t.fill(row[key]))
-                            else:
-                                row_data.append(row[key])
-                        table.append(row_data)
+                f = open(file_path, 'r')
+                data = json.load(f)
+                f.close()
+                command = data['command']
+                description = data['description']
+                availability = data['availability']
+                paramaters = data['paramaters']
+                basic_info = f'Command: {command} \nDescription: {description} \nAvailability: {availability}\nParameters:'
+                headers = ['Parameter', 'Min', 'Definition', 'Type']
+                table = []
+                t = TextWrapper(width=30)
+                for row in paramaters:
+                    row_data = []
+                    for key in row:
+                        if key == 'Definition':
+                            row_data.append(t.fill(row[key]))
+                        else:
+                            row_data.append(row[key])
+                    table.append(row_data)
 
-                    paramaters_table = tabulate(table,
-                                                headers,
-                                                tablefmt="fancy_grid")
-                    return basic_info, paramaters_table
+                paramaters_table = tabulate(table,
+                                            headers,
+                                            tablefmt="fancy_grid")
+                return basic_info, paramaters_table
         else:
             return f"Command '{command_name}' not found!"
 
@@ -293,10 +294,10 @@ class Core:
         data['ts'] = ts
         data['entity'] = entity
         # write session and current time to local file
-        path = Path(__file__).parent / "../config/session.json"
-        with path.open('w') as f:
-            json.dump(data, f)
-            f.close
+        path = self.session_path
+        f = open(path, 'w')
+        json.dump(data, f)
+        f.close
         return True
 
     def parseParameters(self, parameters):
@@ -336,13 +337,13 @@ class Core:
             file_name_lower_case = file_name.lower()
             if file_name_lower_case == command_name:
                 file_path = os.path.join(path, file)
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                    f.close()
-                    paramaters = data['paramaters']
-                    for row in paramaters:
-                        paramater = row['Parameter']
-                        minValue = row['Min']
-                        if minValue == '1' and paramater != 'COMMAND':
-                            returnData.append(paramater.lower())
+                f = open(file_path, 'r')
+                data = json.load(f)
+                f.close()
+                paramaters = data['paramaters']
+                for row in paramaters:
+                    paramater = row['Parameter']
+                    minValue = row['Min']
+                    if minValue == '1' and paramater != 'COMMAND':
+                        returnData.append(paramater.lower())
         return returnData
