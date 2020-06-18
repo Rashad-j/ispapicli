@@ -1,4 +1,3 @@
-
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -11,6 +10,7 @@ from io import StringIO
 from collections import defaultdict
 import re
 import subprocess
+import os
 
 
 class MainFrame(QWidget):
@@ -55,19 +55,18 @@ class MainFrame(QWidget):
         # initilaize command line completer
         self.initialiseCommandCompleter()
 
-        # command to execute 
+        # command to execute
         self.commandToExecute = ''
 
         # set app icon
-        self.setWindowIcon(QIcon("icons/logo-bgw.jpg"))
-        
+        self.setWindowIcon(QIcon(self.getIcon("logo-bgw.jpg")))
 
     def checkLogin(self):
         result = self.coreLogic.checkSession()
         if result == 'valid':
             self.sessionTime.setText("Your session is valid. ")
             self.sessionTime.setStyleSheet("color:green")
-            self.loginBtn.setIcon(QIcon("icons/logout.png"))
+            self.loginBtn.setIcon(QIcon(self.getIcon("logout.png")))
             self.loginBtn.setText('Logout')
             self.loginBtn.clicked.connect(self.logout)
             self.reconnectBtnAction(self.loginBtn.clicked, self.logout)
@@ -77,10 +76,10 @@ class MainFrame(QWidget):
         else:
             self.sessionTime.setText("Session expired! ")
             self.sessionTime.setStyleSheet("color:red")
-            self.loginBtn.setIcon(QIcon("icons/login.png"))
+            self.loginBtn.setIcon(QIcon(self.getIcon("login.png")))
             self.loginBtn.setText('Login')
-            self.reconnectBtnAction(
-                self.loginBtn.clicked, self.openLoginWindow)
+            self.reconnectBtnAction(self.loginBtn.clicked,
+                                    self.openLoginWindow)
             # diable gui
             self.disableEnableGui('disable')
 
@@ -229,10 +228,11 @@ class MainFrame(QWidget):
                 self.plainResponse.setText(data)
             # case update commands
             elif result == 'update':
-                # create scrap object 
+                # create scrap object
                 scrap = Scrap()
                 # scrap commands
-                process = subprocess.Popen(scrap.scrapCommands(), stdout=subprocess.PIPE)
+                process = subprocess.Popen(scrap.scrapCommands(),
+                                           stdout=subprocess.PIPE)
                 for line in process.stdout:
                     #sys.stdout.write(line)
                     self.listResponse.append(line)
@@ -295,37 +295,36 @@ class MainFrame(QWidget):
                     self.commandText.setText()
             except Exception as e:
                 pass
-            commandView = "\n".join(("{}={}".format(*i)
-                                     for i in params.items()))
+            commandView = "\n".join(
+                ("{}={}".format(*i) for i in params.items()))
             self.commandText.setText(commandView)
             self.commandToExecute = '--' + commandView
 
     def createToolbar(self):
         self.toolbar = QToolBar("My main toolbar")
         self.toolbar.setIconSize(QSize(20, 20))
-        saveAction = QAction(
-            QIcon("icons/save.png"), "Save results to a file", self)
+        saveAction = QAction(QIcon(self.getIcon("save.png")),
+                             "Save results to a file", self)
         saveAction.triggered.connect(lambda: self.saveCommandToFile())
 
-        copyAction = QAction(
-            QIcon("icons/copy.png"), "Copy the results to clipboard", self)
+        copyAction = QAction(QIcon(self.getIcon("copy.png")),
+                             "Copy the results to clipboard", self)
         copyAction.triggered.connect(self.copyToClipboard)
 
-        helpAction = QAction(
-            QIcon("icons/help.png"), "See help documentation", self)
+        helpAction = QAction(QIcon(self.getIcon("help.png")),
+                             "See help documentation", self)
         helpAction.triggered.connect(self.showHelp)
 
-        openAction = QAction(
-            QIcon("icons/new.png"), "Open another window", self)
+        openAction = QAction(QIcon(self.getIcon("new.png")),
+                             "Open another window", self)
 
         self.sessionTime = QLabel("Checking your session... ")
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         self.loginBtn = QPushButton("Login")
-        self.loginBtn.setIcon(QIcon("icons/login.png"))
-        self.loginBtn.setStyleSheet(
-            "padding: 2px; padding-left: 6px")
+        self.loginBtn.setIcon(QIcon(self.getIcon("login.png")))
+        self.loginBtn.setStyleSheet("padding: 2px; padding-left: 6px")
         self.loginBtn.setIconSize(QSize(12, 12))
         self.loginBtn.setLayoutDirection(Qt.RightToLeft)
 
@@ -373,13 +372,13 @@ class MainFrame(QWidget):
     def createTopGroupBox(self):
         self.topBox = QGroupBox((""))
         executeBtn = QPushButton("Execute")
-        executeBtn.setIcon(QIcon("icons/execute.png"))
+        executeBtn.setIcon(QIcon(self.getIcon("execute.png")))
         executeBtn.clicked.connect(self.executeCommand)
         executeBtn.setIconSize(QSize(14, 14))
         executeBtn.setLayoutDirection(Qt.RightToLeft)
 
         clearBtn = QPushButton("Clear")
-        clearBtn.setIcon(QIcon("icons/cross.png"))
+        clearBtn.setIcon(QIcon(self.getIcon("cross.png")))
         clearBtn.setIconSize(QSize(14, 14))
         clearBtn.setLayoutDirection(Qt.RightToLeft)
         clearBtn.clicked.connect(self.__clearCMDfield)
@@ -391,7 +390,7 @@ class MainFrame(QWidget):
         #self.cmdTxt.keyPressEvent(qSpaceEvent)
         self.cmdTxt.installEventFilter(self)
         self.cmdTxt.returnPressed.connect(self.executeCommand)
-        
+
         # set command completer
         self.completer = QCompleter()
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -400,14 +399,14 @@ class MainFrame(QWidget):
         self.minParameter = QLabel(self)
         self.minParameter.setText('Min parameters: ')
         self.minParameter.setStyleSheet("color:gray")
-        f = QFont("Arial", 9);                            
+        f = QFont("Arial", 9)
         self.minParameter.setFont(f)
 
         gridLayout = QGridLayout()
-        gridLayout.addWidget(self.cmdTxt,0, 1, 1, 1)
+        gridLayout.addWidget(self.cmdTxt, 0, 1, 1, 1)
         gridLayout.addWidget(executeBtn, 0, 2, 1, 1)
-        gridLayout.addWidget(clearBtn,   0, 3, 1, 1)
-        gridLayout.addWidget(self.minParameter,  1, 1, 1, 1)
+        gridLayout.addWidget(clearBtn, 0, 3, 1, 1)
+        gridLayout.addWidget(self.minParameter, 1, 1, 1, 1)
         gridLayout.setContentsMargins(5, 0, 5, 10)
         self.topLayout = gridLayout
         self.topBox.setLayout(gridLayout)
@@ -565,16 +564,21 @@ class MainFrame(QWidget):
             textToWrite = self.commandAndResponsePlain()
             options = QFileDialog.Options()
             # options |= QFileDialog.DontUseNativeDialog # Qt's builtin File Dialogue
-            fileName, _ = QFileDialog.getSaveFileName(self, "Open", "report.txt", "All Files (*.*)", options=options)
+            fileName, _ = QFileDialog.getSaveFileName(self,
+                                                      "Open",
+                                                      "report.txt",
+                                                      "All Files (*.*)",
+                                                      options=options)
             if fileName:
                 try:
                     with open(fileName, 'w') as file:
                         file.write(textToWrite)
                     alert = QMessageBox()
-                    alert.setText("'" + fileName + "' \n\nFile Saved Successfully!")
+                    alert.setText("'" + fileName +
+                                  "' \n\nFile Saved Successfully!")
                     alert.setIcon(QMessageBox.Information)
                     alert.exec_()
-                except Exception as e: 
+                except Exception as e:
                     alert = QMessageBox()
                     alert.setIcon(QMessageBox.Critical)
                     alert.setText("Couldn't save the file due to: " + str(e))
@@ -585,7 +589,7 @@ class MainFrame(QWidget):
             alert.setText("Request a command first!")
             alert.setWindowTitle("Error")
             alert.exec_()
-    
+
     def commandAndResponsePlain(self):
         result = self.plainResponse.toPlainText()
         command = self.response.getCommandPlain()
@@ -597,15 +601,15 @@ class MainFrame(QWidget):
             newText = self.commandAndResponsePlain()
             clipboard = QApplication.clipboard()
             clipboard.setText(newText)
-        except Exception as e: 
+        except Exception as e:
             print(e)
-            pass # in the case where there is not command requested
-    
+            pass  # in the case where there is not command requested
+
     def showHelp(self):
         print('help')
 
     def showAbout(self):
-        
+
         box = QMessageBox(self)
         msg = """<p align='center'>
         <b style='font-size:20px'>ISPAPI Tool</b>. <br><br><br>
@@ -629,22 +633,43 @@ class MainFrame(QWidget):
         box.show()
 
     def eventFilter(self, source, event):
+
         # this function to handle autocomplete for command line
         if (event.type() == QEvent.KeyRelease and source is self.cmdTxt):
-                if event.key() == Qt.Key_Space:
-                    # show min paramters suggestions
-                    try:
-                        cmd = self.cmdTxt.text()
-                        m = re.match('^(\w+)\s$', cmd)
-                        if m:
-                            minParams = self.coreLogic.getMinParameters(cmd.strip())
+            if event.key() == Qt.Key_Space:
+                # show min paramters suggestions
+                try:
+                    cmd = self.cmdTxt.text()
+                    m = re.match('^(\w+)\s$', cmd)
+                    if m:
+                        minParams = self.coreLogic.getMinParameters(
+                            cmd.strip())
+                        if len(minParams) > 0:
                             minParamsLabel = ', '.join(minParams)
                             minParamsInput = '= '.join(minParams)
-                            cursorPosition = len(self.cmdTxt.text() + minParams[0]) + 1 # for the '=' char
-                            self.cmdTxt.setText(cmd + minParamsInput +'=')
-                            self.minParameter.setText('Min parameters: ' + minParamsLabel)
+                            cursorPosition = len(
+                                self.cmdTxt.text() +
+                                minParams[0]) + 1  # for the '=' char
+                            self.cmdTxt.setText(cmd + minParamsInput + '=')
+                            self.minParameter.setText('Min parameters: ' +
+                                                      minParamsLabel)
                             self.cmdTxt.setCursorPosition(cursorPosition)
-                    except Exception as e:
-                        print(e)
+                        else:
+                            self.minParameter.setText('Min parameters:')
+                except Exception as e:
+                    print(e)
         # must return bool value
         return super(MainFrame, self).eventFilter(source, event)
+
+    def getIcon(self, iconName):
+        ##
+        # This function checks if the app is executable or in development and return the path
+
+        if getattr(sys, 'frozen', False):
+            self.absolute_dirpath = os.path.dirname(sys.executable)
+        elif __file__:
+            self.absolute_dirpath = os.path.dirname(__file__)
+
+        path = self.command_path = os.path.join(self.absolute_dirpath,
+                                                '../icons/' + iconName)
+        return path
