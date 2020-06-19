@@ -27,7 +27,8 @@ def main(args):
     original_args = original_args.replace(" = ", "=")
     original_args = original_args.replace(" =", "=")
     original_args = original_args.replace("= ", "=")
-    print(original_args)
+    print("Command entered: " + original_args)
+    print("----------------")
     # split args in an array
     splitted_args = original_args.split()
     try:
@@ -37,6 +38,7 @@ def main(args):
         reminderargs = args['args']
         # execute the command and show the results
         result, data = core_obj.parseArgs(args)
+
         # case gui requested
         if result == 'gui':
             startGUI()
@@ -56,19 +58,6 @@ def main(args):
                 '''))
             parser.print_help()
 
-        # case help of specific command
-        elif result == 'help_command':
-            if type(data) == str:
-                print(data)
-            else:
-                print('\nCommand info: \n')
-                print(data[0])
-                print(data[1])
-
-        # case general message
-        elif result == 'msg':
-            print(data)
-
         # case command requested
         elif result == 'cmd':
             # append reminder args with the command
@@ -79,21 +68,11 @@ def main(args):
             response = core_obj.request(cmd)
             result = response.getPlain()
             print(result)
-
-        # list of commands
-        elif result == 'list':
-            print((data))
-
-        # logout the user and destory the session
-        elif result == 'logout':
-            status, msg = data
-            print(msg)
-
+        # update current commands
         elif result == 'update':
             scraper = Scrap()
             scraper.scrapCommands()
-
-        # case user entered unknow command
+        # cases for msg
         else:
             print(data)
 

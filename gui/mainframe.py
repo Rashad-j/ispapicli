@@ -199,19 +199,7 @@ class MainFrame(QWidget):
                 # show output on the GUI
                 helpText = preHelp + stdoutValue
                 self.plainResponse.setText(helpText)
-            # show specific command help
-            elif result == 'help_command':
-                if type(data) == str:
-                    self.plainResponse.setText(data)
-                else:
-                    infoText = 'Command info: \n'
-                    infoText += data[0] + '\n'
-                    infoText += data[1] + '\n'
-                    self.plainResponse.setText(infoText)
-            # other messages related to login and server side errors
-            elif result == 'msg':
-                self.plainResponse.setText(data)
-            # case result return that command is ready to execute
+
             elif result == 'cmd':
                 # append reminder args with the command
                 params_list = core_obj.parseParameters(reminderargs)
@@ -222,27 +210,12 @@ class MainFrame(QWidget):
                 # set reult values to gui
                 self.populateResults(self.response)
 
-            # self.tableResponse.inser(propertiesResult)
-            # case list of command
-            elif result == 'list':
-                self.plainResponse.setText(data)
             # case update commands
             elif result == 'update':
                 # create scrap object
-                scrap = Scrap()
-                # scrap commands
-                process = subprocess.Popen(scrap.scrapCommands(),
-                                           stdout=subprocess.PIPE)
-                for line in process.stdout:
-                    #sys.stdout.write(line)
-                    self.listResponse.append(line)
-                # show output on the GUI
-                # self.plainResponse.setText(stdoutValue)
-            # case logout
-            elif result == 'logout':
-                status, msg = data
+                # scrap = Scrap()
+                msg = "Please run this command in the terminal"
                 self.plainResponse.setText(msg)
-            # case unknown response or command
             else:
                 self.plainResponse.setText(data)
 
@@ -364,6 +337,7 @@ class MainFrame(QWidget):
 
         help = self.menuBar.addMenu("Help")
         help.addAction("About ISPAPI tool")
+        help.addAction("How to start?")
 
         file.triggered[QAction].connect(self.menuBarActions)
         edit.triggered[QAction].connect(self.menuBarActions)
@@ -415,7 +389,7 @@ class MainFrame(QWidget):
         self.leftGroupBox = QGroupBox("Command extracted")
         self.commandText = QTextEdit()
         self.commandText.setPlaceholderText(
-            "Or enter command here line by line")
+            "Extracted command will be shown here")
 
         tab2hbox = QHBoxLayout()
         tab2hbox.setContentsMargins(5, 5, 5, 5)
@@ -481,6 +455,8 @@ class MainFrame(QWidget):
             self.showHelp()
         if action == 'About ISPAPI tool':
             self.showAbout()
+        if action == 'How to start?':
+            self.showHelp()
 
     def closeApplication(self):
         print("exiting")
@@ -606,7 +582,29 @@ class MainFrame(QWidget):
             pass  # in the case where there is not command requested
 
     def showHelp(self):
-        print('help')
+        box = QMessageBox(self)
+        msg = """<p align='center'>
+        <b style='font-size:20px'>Help Information</b>. <br><br><br>
+        This window provides a simple help view, more detailed help can be found at: 
+        <a href="https://www.hexonet.net/">https://www.hexonet.net</a>
+        <br><br>
+        Quick start:
+        <br>
+        To show help, type the command: -h | --help
+        <br>
+        From there you will find all information about using the command line in both the GUI and terminal
+        <br><br>
+        <span style="color:orange">Note</span>: Commands executed in terminal are similar to commands used in the GUI, except for the "--update" command which is only possible to trigger in the terminal
+        <br><br><br>
+        Copyright 2020 @Hexonet
+        <br><br>
+        </p>
+        """
+        box.setStandardButtons(QMessageBox.Ok)
+        box.setIcon(QMessageBox.Information)
+        box.setWindowTitle("Help")
+        box.setText(msg)
+        box.show()
 
     def showAbout(self):
 
@@ -620,7 +618,7 @@ class MainFrame(QWidget):
         <br>
         Email: support@hexonet.net 
         <br>
-        Website: https://www.hexonet.net/
+        Website: <a href="https://www.hexonet.net/">https://www.hexonet.net</a>
         <br><br><br>
         Copyright 2020 @Hexonet
         <br><br>

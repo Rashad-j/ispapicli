@@ -8,12 +8,18 @@ import sys
 
 class Scrap:
     def __init__(self, URL=''):
-        self.mainURL = URL
-
+        self.gitHubURL = 'https://github.com/hexonet/hexonet-api-documentation/tree/master/API'
         # init app directories
-        self.initAppDirectories()
+        self.__initAppDirectories()
 
-    def initAppDirectories(self):
+    def __initAppDirectories(self):
+        '''
+        Check whether the app is running from the editor or from an executable file
+
+        Returns:
+        --------
+        Null
+        '''
         if getattr(sys, 'frozen', False):
             self.absolute_dirpath = os.path.dirname(sys.executable)
         elif __file__:
@@ -24,26 +30,42 @@ class Scrap:
                                          '../config/session.json')
 
     # recursive function
-    def getURLs(self, urls):
+    def __getURLs(self, urls):
+        '''
+        A recursive function that get all documentation page fro GitHub
+
+        Returns:
+        --------
+        List: Allurls
+        '''
         # urls to return
         Allurls = []
         # parse url
-        for url in urls:
-            if (self.checkUrlType(url) == 'file'):
-                Allurls.append(url)
-                print('url found: ' + url)
-                # create the command here
-            else:
-                # it is a directory
-                # get all links in this directory
-                newLinks = self.getPageURLs(url)
-                # for each link, call it by the function itself
-                for newlink in newLinks:
-                    Allurls.extend(self.getURLs([newlink]))
-        return Allurls
+        try:
+            for url in urls:
+                if (self.__checkUrlType(url) == 'file'):
+                    Allurls.append(url)
+                    print('url found: ' + url)
+                else:
+                    # it is a directory
+                    # get all links in this directory
+                    newLinks = self.__getPageURLs(url)
+                    # for each link, call it by the function itself
+                    for newlink in newLinks:
+                        Allurls.extend(self.__getURLs([newlink]))
+            return Allurls
+        except Exception as e:
+            print("Network erros occured, some commands skipped: " + e)
 
-    def getPageURLs(self, url):
-        # urls in a single page to return
+    def __getPageURLs(self, url):
+        '''
+        Get urls from single page that leads to single documentation each
+
+        Returns:
+        --------
+        List: urls 
+
+        '''
         urls = []
         page = requests.get(url)
         # get page download status, 200 is success
@@ -70,13 +92,29 @@ class Scrap:
             raise Exception("Page couldn't loaded. Status code: " +
                             str(statusCode))
 
-    def checkUrlType(self, url):
+    def __checkUrlType(self, url):
+        '''
+        Check the type of the url found, either file with documentation or a directory
+
+        Returns:
+        --------
+        String: <> 
+        '''
+
         if url.endswith('.md'):
             return 'file'
         else:
             return 'directory'
 
-    def getParsedPage(self, url):
+    def __getParsedPage(self, url):
+        '''
+        Get HTML elements from a signle page
+
+        Returns:
+        --------
+        Set: article, table
+
+        '''
         try:
             page = requests.get(url)
             # get page download status, 200 is success
@@ -93,13 +131,26 @@ class Scrap:
         except:
             return "Couldn't parse page: " + url
 
-    def getCommandName(self, article):
-        # since there is only one h1 element in article block, return it
-        return article.h1.text
+    def __getCommandName(self, article):
+        '''
+        Return the h1 element in article block which is the command name
+
+        Returns:
+        --------
+        String: commandName
+        '''
+        commandName = article.h1.text
+        return commandName
 
     # description of the command
-    def getCommandDescription(self, article):
-        # 1st p is the description
+    def __getCommandDescription(self, article):
+        '''
+        Extract the command description 
+
+        Returns:
+        --------
+        String: desc | ''
+        '''
         # adding exception for webely
         try:
             desc = article.find_all('p')
@@ -108,19 +159,29 @@ class Scrap:
             return ' '
 
     # get comman avaiablity
+    def __getCommandAvailability(self, article):
+        '''
+        Extract the 2nd p which is the availability
 
-    def getCommandAvailability(self, article):
-        # 2nd p is the description
+        Returns:
+        --------
+        String: ava | ' '
+        '''
         try:
             ava = article.find_all('p')
             return ava[1].text
         except:
             return ' '
 
-    # allowed parameters
-    def getCommandParameters(self, table):
-        # get columns names
-        headers = self.getTableHeaders(table)
+    def __getCommandParameters(self, table):
+        '''
+        Extract the params from the command description table
+
+        Returns:
+        --------
+        List: params
+        '''
+        headers = self.__getTableHeaders(table)
         params = []
         param = {}
         tableBody = table.tbody
@@ -134,54 +195,90 @@ class Scrap:
             param = {}
         return params
 
-    def getCommandExample(self, article):
+    def __getCommandExample(self, article):
         pass
 
-    def getResponseExample(self, article):
+    def __getResponseExample(self, article):
         pass
 
-    def getTableHeaders(self, table):
+    def __getTableHeaders(self, table):
+        '''
+        Extract the headers of the description table 
+
+        Returns:
+        --------
+        List: headers
+        '''
         tableHead = table.thead
         row = tableHead.tr
         cols = row.find_all('th')
-        data = []
+        headers = []
         # get text only
         for col in cols:
-            data.append(col.text)
-        return data
+            headers.append(col.text)
+        return headers
 
-    def dumpCommandToFile(self, commandName, data):
-        p = os.path.join(self.absolute_dirpath,
-                         '../commands/' + commandName + '.json')
+    def __dumpCommandToFile(self, commandName, data):
+        '''
+        Creates a json file for the command: commandName
 
-        f = open(p, "w")
-        json.dump(data, f)
-        f.close()
-        print('Command file created: ', p)
-
-    def getCommandData(self, article, table):
-        data = {}
-        data['command'] = self.getCommandName(article)
-        data['description'] = self.getCommandDescription(article)
-        data['availability'] = self.getCommandAvailability(article)
-        data['paramaters'] = self.getCommandParameters(table)
-        return data
-
-    def scrapCommands(self):
-        gitHubURL = 'https://github.com/hexonet/hexonet-api-documentation/tree/master/API'
+        Returns:
+        --------
+        True | Raise exception 
+        '''
         try:
-            scrap = Scrap(gitHubURL)
-            urls = scrap.getURLs([gitHubURL])
-            for url in urls:
-                try:
-                    article, table = scrap.getParsedPage(url)
-                    commandName = scrap.getCommandName(article)
-                    data = scrap.getCommandData(article, table)
-                    scrap.dumpCommandToFile(commandName, data)
-                except Exception as e:
-                    print(
-                        "Couldn't extract command because documentation differs in URL: "
-                        + url + " \nReason: " + str(e))
-            print('\nCommand finished.')
+            p = os.path.join(self.absolute_dirpath,
+                             '../commands/' + commandName + '.json')
+            f = open(p, "w")
+            json.dump(data, f)
+            f.close()
+            print('Command file created: ', p)
+            return True
+        except:
+            raise Exception("Couldn't create a file for the command: " +
+                            commandName)
+
+    def __getCommandData(self, article, table):
+        '''
+        Gather all command data in a list and return it 
+
+        Returns:
+        --------
+        Dictionary: data
+        '''
+        try:
+            data = {}
+            data['command'] = self.__getCommandName(article)
+            data['description'] = self.__getCommandDescription(article)
+            data['availability'] = self.__getCommandAvailability(article)
+            data['paramaters'] = self.__getCommandParameters(table)
+            return data
         except Exception as e:
-            print("Process stopped due to: " + str(e))
+            raise e
+
+    # scrap commands
+    def scrapCommands(self):
+        '''
+        Executes the scrap process
+
+        Returns:
+        --------
+        Null
+        '''
+
+        # get all commands urls, ending with .md
+        urls = self.__getURLs([self.gitHubURL])
+
+        for url in urls:
+            try:
+                article, table = self.__getParsedPage(url)
+                commandName = self.__getCommandName(article)
+                data = self.__getCommandData(article, table)
+                self.__dumpCommandToFile(commandName, data)
+            except Exception as e:
+                print(
+                    "Couldn't extract command because documentation differs in URL: "
+                    + url + " \nReason: " + str(e))
+
+        print('\nCommands count: ' + str(len(urls)))
+        print('Command finished.')
